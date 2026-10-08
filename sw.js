@@ -8,7 +8,7 @@
    · Al publicar una versión nueva, sube VERSION aquí y el ?v= en
      inergo.html (ver README → "Publicar una versión nueva").
 ========================================================= */
-const VERSION = "2.0.1";
+const VERSION = "2.1.0";
 const CACHE_NAME = "inergo-" + VERSION;
 const HTML_FALLBACK = "./inergo.html";
 
@@ -16,7 +16,9 @@ const APP_SHELL = [
   "./",
   "./inergo.html",
   "./inergo.css?v=" + VERSION,
+  "./js/inergo-config.js?v=" + VERSION,
   "./js/inergo-core.js?v=" + VERSION,
+  "./js/inergo-cloud.js?v=" + VERSION,
   "./js/inergo-app.js?v=" + VERSION,
   "./fonts/inter-latin-var.woff2",
   "./fonts/manrope-latin-var.woff2",

@@ -7,7 +7,7 @@
 
   const Core = window.InergoCore;
   const {
-    CATEGORIES, DEFAULT_CHALLENGES, MICROCOPY, SPIN_PHRASE, STORAGE_KEY,
+    CATEGORIES, MICROCOPY, SPIN_PHRASE, STORAGE_KEY,
     CUSTOM_CHALLENGE_POINTS, APP_VERSION, mk
   } = Core;
 
@@ -254,7 +254,7 @@
   /* =========================================================
      7. NAVEGACIÓN
   ========================================================= */
-  const SCREENS_WITH_HEADING = ["pending","progress","mychallenges","settings"];
+  const SCREENS_WITH_HEADING = ["pending","progress","mychallenges","settings","admin"];
 
   function leavePlayScreen(){
     stopCountdown();
@@ -278,6 +278,7 @@
     if(screenName === "mychallenges") renderMyChallenges();
     if(screenName === "pending") renderPendingChallenges();
     if(screenName === "settings") renderSettings();
+    if(screenName === "admin") renderAdmin();
     if(screenName === "play") requestWakeLock();
     window.scrollTo(0,0);
     // Accesibilidad: al cambiar de pantalla el foco va al título.
@@ -514,6 +515,7 @@
     $("#testmode-row").classList.toggle("hidden", !data.testMode);
     $("#testmode-toggle").checked = !!data.testMode;
     renderSkipButton();
+    renderAdminEntry();
   }
   function applyTestModeFromUrl(){
     try{
@@ -1046,7 +1048,7 @@
 
     const defaultList = $("#default-list");
     defaultList.innerHTML = "";
-    DEFAULT_CHALLENGES.forEach(c => {
+    Core.getCatalog().forEach(c => {
       const disabled = data.disabledDefaultIds.includes(c.id);
       const row = document.createElement("div");
       row.className = "flex items-center gap-3 py-2.5 border-b";
@@ -1468,6 +1470,7 @@
         if(state.timerHandle) tickCountdown(false);
       }
       if(state.screen === "home") renderHome();
+      maybeRefreshCatalog();
     });
   }
 
@@ -1502,6 +1505,332 @@
     });
   }
 
+
+  /* =========================================================
+     12. CATÁLOGO REMOTO Y ADMINISTRACIÓN
+     El catálogo vive en Supabase. La app arranca con la última copia
+     guardada (o los 103 de serie) y la actualiza en segundo plano: si no
+     hay conexión o el servidor no responde, el juego sigue igual.
+  ========================================================= */
+  const Cloud = window.InergoCloud;
+  const cloudOn = !!(Cloud && Cloud.enabled());
+  const CATALOG_MAX_AGE = 5 * 60 * 1000;
+  let lastCatalogFetch = 0;
+  const admin = { rows: [], filter: "todos", editingId: null, email: null, isAdmin: null };
+
+  function applyCatalogRows(rows){
+    const list = Core.normalizeCatalog(rows);
+    if(!list) return false;
+    Core.setCatalog(list);
+    return true;
+  }
+
+  function loadCachedCatalog(){
+    if(!cloudOn) return;
+    const cached = Cloud.readCachedCatalog();
+    if(cached) applyCatalogRows(cached.rows);
+  }
+
+  function onCatalogChanged(){
+    if(state.screen === "home") renderAvailableCount();
+    if(state.screen === "mychallenges") renderMyChallenges();
+  }
+
+  async function refreshCatalog(){
+    if(!cloudOn) return;
+    lastCatalogFetch = Date.now();
+    try{
+      const rows = await Cloud.fetchCatalog();
+      if(applyCatalogRows(rows)){
+        Cloud.saveCachedCatalog(rows);
+        onCatalogChanged();
+      }
+    }catch(e){ /* sin conexión o servidor en pausa: seguimos con la copia guardada */ }
+  }
+
+  function maybeRefreshCatalog(){
+    if(Date.now() - lastCatalogFetch > CATALOG_MAX_AGE) refreshCatalog();
+  }
+
+  /* ---------- Panel de administración ---------- */
+  function showBlock(el, on){
+    el.classList.toggle("hidden", !on);
+    el.classList.toggle("flex", on);
+  }
+  function setBusy(btn, busy, label){
+    if(busy){ btn.dataset.label = btn.textContent; btn.textContent = label || "…"; }
+    else if(btn.dataset.label){ btn.textContent = btn.dataset.label; }
+    btn.disabled = busy;
+    btn.classList.toggle("is-busy", busy);
+  }
+
+  function renderAdminEntry(){
+    const show = cloudOn && (data.testMode || !!Cloud.getSession());
+    $("#admin-section").classList.toggle("hidden", !show);
+  }
+
+  function showAdminView(view){
+    showBlock($("#admin-login"), view === "login");
+    showBlock($("#admin-denied"), view === "denied");
+    showBlock($("#admin-panel"), view === "panel");
+  }
+
+  function showLoginStep(step){
+    showBlock($("#admin-login-email"), step === "email");
+    showBlock($("#admin-login-code"), step === "code");
+  }
+
+  async function renderAdmin(){
+    if(!cloudOn){ showAdminView(null); showToast("La conexión con el servidor no está configurada."); return; }
+    const session = Cloud.getSession();
+    if(!session){
+      showAdminView("login");
+      showLoginStep(admin.email ? "code" : "email");
+      if(admin.email) $("#admin-email-sent").textContent = admin.email;
+      return;
+    }
+    $all(".admin-session-email").forEach(el => { el.textContent = session.email || "tu cuenta"; });
+    if(admin.isAdmin === null){
+      showAdminView(null);
+      try{
+        admin.isAdmin = await Cloud.isAdmin();
+      }catch(e){
+        showToast(e.message);
+        if(!Cloud.getSession()){ admin.isAdmin = null; renderAdmin(); }
+        return;
+      }
+    }
+    if(!admin.isAdmin){ showAdminView("denied"); return; }
+    showAdminView("panel");
+    updateAdminFormForCategory();
+    await loadAdminRows();
+  }
+
+  async function loadAdminRows(){
+    try{
+      const rows = await Cloud.fetchCatalog({ includeInactive:true });
+      admin.rows = Array.isArray(rows) ? rows : [];
+      if(applyCatalogRows(admin.rows)) Cloud.saveCachedCatalog(admin.rows);
+      renderAdminList();
+    }catch(e){
+      showToast(e.message);
+    }
+  }
+
+  const ADMIN_POINTS_HINT = {
+    espontanea: "+20 XP · cronómetro",
+    experiencia: "+50 XP · se apunta en pendientes, sin cronómetro",
+    reflexion: "+15 XP · cronómetro",
+    conocimiento: "+20 XP · investigar 10 min y hablar 1 min"
+  };
+
+  function updateAdminFormForCategory(){
+    const cat = $("#admin-category").value;
+    $("#admin-duration-wrap").classList.toggle("hidden", Core.CATEGORY_TYPE[cat] !== "timer");
+    $("#admin-points-hint").textContent = ADMIN_POINTS_HINT[cat] || "";
+  }
+
+  function resetAdminForm(){
+    admin.editingId = null;
+    $("#admin-text").value = "";
+    $("#admin-category").value = "espontanea";
+    $("#admin-duration").value = "300";
+    $("#admin-form-title").textContent = "Nuevo reto";
+    $("#admin-save").textContent = "Publicar reto";
+    $("#admin-cancel-edit").classList.add("hidden");
+    updateAdminFormForCategory();
+  }
+
+  function ensureDurationOption(seconds){
+    const sel = $("#admin-duration");
+    if(!Array.from(sel.options).some(o => Number(o.value) === seconds)){
+      const opt = document.createElement("option");
+      opt.value = String(seconds);
+      opt.textContent = (seconds % 60 === 0 ? (seconds / 60) + " min" : seconds + " s");
+      sel.appendChild(opt);
+    }
+    sel.value = String(seconds);
+  }
+
+  function editAdminRow(id){
+    const row = admin.rows.find(r => r.id === id);
+    if(!row) return;
+    admin.editingId = id;
+    $("#admin-text").value = row.text;
+    $("#admin-category").value = row.category;
+    if(row.duration_type === "timer" && row.duration_seconds) ensureDurationOption(row.duration_seconds);
+    $("#admin-form-title").textContent = "Editar reto";
+    $("#admin-save").textContent = "Guardar cambios";
+    $("#admin-cancel-edit").classList.remove("hidden");
+    updateAdminFormForCategory();
+    const scroller = $("#screen-admin .overflow-y-auto");
+    if(scroller) scroller.scrollTo({ top:0, behavior: reducedMotion.matches ? "auto" : "smooth" });
+    $("#admin-text").focus({ preventScroll:true });
+  }
+
+  async function saveAdminForm(e){
+    if(e) e.preventDefault();
+    const btn = $("#admin-save");
+    let row;
+    try{
+      row = Core.challengeToCatalogRow({
+        text: $("#admin-text").value,
+        category: $("#admin-category").value,
+        durationSeconds: parseInt($("#admin-duration").value, 10)
+      });
+    }catch(err){ showToast(err.message); $("#admin-text").focus(); return; }
+
+    setBusy(btn, true, "Guardando…");
+    try{
+      if(admin.editingId){
+        await Cloud.updateChallenge(admin.editingId, row);
+        showToast("Reto actualizado.");
+      }else{
+        const maxOrder = admin.rows.reduce((m, r) => Math.max(m, Number(r.sort_order) || 0), 0);
+        row.id = Core.newCatalogId(row.category);
+        row.sort_order = maxOrder + 10;
+        row.active = true;
+        await Cloud.createChallenge(row);
+        showToast("Reto publicado. Ya puede salir al tirar.");
+      }
+      setBusy(btn, false);
+      resetAdminForm();
+      await loadAdminRows();
+    }catch(err){
+      setBusy(btn, false);
+      showToast(err.message);
+      if(err.status === 401 && !Cloud.getSession()){ admin.isAdmin = null; renderAdmin(); }
+    }
+  }
+
+  async function toggleAdminRow(id, btn){
+    const row = admin.rows.find(r => r.id === id);
+    if(!row) return;
+    setBusy(btn, true);
+    try{
+      await Cloud.updateChallenge(id, { active: !row.active });
+      showToast(row.active ? "Reto desactivado: ya no saldrá al tirar." : "Reto activado.");
+      await loadAdminRows();
+    }catch(err){
+      setBusy(btn, false);
+      showToast(err.message);
+    }
+  }
+
+  function adminDurationLabel(row){
+    if(row.duration_type === "pending") return "PENDIENTE";
+    if(row.duration_type === "research") return Math.round(row.research_seconds/60) + " MIN + " + Math.round(row.talk_seconds/60) + " MIN";
+    const s = Number(row.duration_seconds) || 0;
+    return s % 60 === 0 ? (s/60) + " MIN" : s + " S";
+  }
+
+  function renderAdminFilter(){
+    const wrap = $("#admin-filter");
+    wrap.innerHTML = "";
+    CATEGORIES.forEach(cat => {
+      const count = cat.id === "todos" ? admin.rows.length : admin.rows.filter(r => r.category === cat.id).length;
+      const b = document.createElement("button");
+      const selected = admin.filter === cat.id;
+      b.className = "chip rounded-full px-4 py-2 font-display font-bold text-xs tracking-wide shrink-0" + (selected ? " selected" : "");
+      b.textContent = cat.label + " · " + count;
+      b.setAttribute("aria-pressed", selected ? "true" : "false");
+      b.addEventListener("click", () => { admin.filter = cat.id; renderAdminList(); });
+      wrap.appendChild(b);
+    });
+  }
+
+  function renderAdminList(){
+    renderAdminFilter();
+    const list = $("#admin-list");
+    list.innerHTML = "";
+    const rows = admin.rows
+      .filter(r => admin.filter === "todos" || r.category === admin.filter)
+      .slice()
+      .sort((a, b) => (Number(b.sort_order) || 0) - (Number(a.sort_order) || 0));
+    const active = admin.rows.filter(r => r.active).length;
+    const inactive = admin.rows.length - active;
+    $("#admin-count").textContent = active + (active === 1 ? " activo · " : " activos · ") + inactive + (inactive === 1 ? " desactivado" : " desactivados");
+    if(rows.length === 0){
+      list.innerHTML = `<p class="font-medium text-sm opacity-60 py-2">No hay retos en esta categoría.</p>`;
+      return;
+    }
+    rows.forEach(r => {
+      const row = document.createElement("div");
+      row.className = "flex items-start gap-3 py-3 border-b" + (r.active ? "" : " admin-row-inactive");
+      row.style.borderColor = "var(--line-soft)";
+      row.innerHTML = `
+        <div class="flex-1 min-w-0">
+          <p class="font-medium text-sm leading-snug">${escapeHtml(r.text)}</p>
+          <p class="font-num text-[10px] opacity-70 mt-1 uppercase">${escapeHtml(categoryLabel(r.category))} · ${escapeHtml(adminDurationLabel(r))}${r.active ? "" : " · desactivado"}</p>
+        </div>
+        <div class="flex flex-col gap-2 shrink-0">
+          <button class="btn-ghost rounded-full px-4 py-1.5 text-[11px] font-bold" data-admin-edit="${escapeHtml(r.id)}">Editar</button>
+          <button class="btn-ghost rounded-full px-4 py-1.5 text-[11px] font-bold" data-admin-toggle="${escapeHtml(r.id)}">${r.active ? "Desactivar" : "Activar"}</button>
+        </div>`;
+      list.appendChild(row);
+    });
+    list.querySelectorAll("[data-admin-edit]").forEach(b => b.addEventListener("click", () => editAdminRow(b.dataset.adminEdit)));
+    list.querySelectorAll("[data-admin-toggle]").forEach(b => b.addEventListener("click", () => toggleAdminRow(b.dataset.adminToggle, b)));
+  }
+
+  function setupAdmin(){
+    if(!cloudOn) return;
+    $("#admin-send-code").addEventListener("click", async () => {
+      const btn = $("#admin-send-code");
+      setBusy(btn, true, "Enviando…");
+      try{
+        admin.email = await Cloud.sendCode($("#admin-email").value);
+        $("#admin-email-sent").textContent = admin.email;
+        showLoginStep("code");
+        $("#admin-code").value = "";
+        $("#admin-code").focus();
+        showToast("Código enviado. Mira tu email.");
+      }catch(e){ showToast(e.message); }
+      setBusy(btn, false);
+    });
+    $("#admin-email").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("#admin-send-code").click(); } });
+    $("#admin-verify").addEventListener("click", async () => {
+      const btn = $("#admin-verify");
+      setBusy(btn, true, "Entrando…");
+      try{
+        await Cloud.verifyCode(admin.email, $("#admin-code").value);
+        admin.isAdmin = null;
+        admin.email = null;
+        renderAdminEntry();
+        showToast("Sesión iniciada.");
+        setBusy(btn, false);
+        renderAdmin();
+      }catch(e){ setBusy(btn, false); showToast(e.message); }
+    });
+    $("#admin-code").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("#admin-verify").click(); } });
+    $("#admin-change-email").addEventListener("click", () => { admin.email = null; showLoginStep("email"); $("#admin-email").focus(); });
+    $all(".admin-signout").forEach(b => b.addEventListener("click", async () => {
+      await Cloud.signOut();
+      admin.isAdmin = null;
+      admin.rows = [];
+      resetAdminForm();
+      renderAdminEntry();
+      showToast("Sesión cerrada.");
+      renderAdmin();
+    }));
+    $("#admin-category").addEventListener("change", updateAdminFormForCategory);
+    $("#admin-form").addEventListener("submit", saveAdminForm);
+    $("#admin-cancel-edit").addEventListener("click", resetAdminForm);
+    resetAdminForm();
+  }
+
+  // Vuelta desde el enlace del email: la sesión llega en la URL.
+  function consumeLoginRedirect(){
+    if(!cloudOn) return false;
+    const r = Cloud.consumeUrlSession();
+    if(!r) return false;
+    if(r.error){ showToast(r.error); return false; }
+    // Quien entra como administrador no necesita la introducción.
+    if(!data.onboardingDone){ data.onboardingDone = true; saveData(); }
+    showToast("Sesión iniciada.");
+    return true;
+  }
+
   // Enlaces directos: inergo.html?s=pending | progress | mychallenges | settings
   function initialScreenFromUrl(){
     try{
@@ -1511,6 +1840,7 @@
   }
 
   function init(){
+    loadCachedCatalog();
     resetForm();
     setupTooltip();
     setupMirrorToggle();
@@ -1521,9 +1851,11 @@
     updatePendingBadge();
     registerServiceWorker();
     applyTestModeFromUrl();
+    setupAdmin();
     renderTestModeUI();
 
-    const deepLink = initialScreenFromUrl();
+    const fromLoginLink = consumeLoginRedirect();
+    const deepLink = fromLoginLink ? "admin" : initialScreenFromUrl();
     if(deepLink){
       goTo(deepLink, { silentFocus:true });
     }else if(data.activeChallenge){
@@ -1534,7 +1866,8 @@
       goTo("home", { silentFocus:true });
     }
 
-    if(!data.onboardingDone && !data.activeChallenge) openOnboarding();
+    if(!data.onboardingDone && !data.activeChallenge && !fromLoginLink) openOnboarding();
+    refreshCatalog();
   }
 
   init();

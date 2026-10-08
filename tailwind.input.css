@@ -82,7 +82,7 @@ body{
 /* Progreso y Mis Retos contienen listas de longitud variable (historial, retos
    personalizados, 84 retos predeterminados): son las únicas zonas con scroll
    interno posible. Home y el flujo de juego nunca necesitan scroll. */
-.screen[data-screen="progress"], .screen[data-screen="mychallenges"], .screen[data-screen="pending"], .screen[data-screen="settings"]{ overflow:visible; }
+.screen[data-screen="progress"], .screen[data-screen="mychallenges"], .screen[data-screen="pending"], .screen[data-screen="settings"], .screen[data-screen="admin"]{ overflow:visible; }
 @keyframes screen-in{
   from{ opacity:0; transform:translateY(10px); }
   to{ opacity:1; transform:translateY(0); }
@@ -484,12 +484,12 @@ input[type="range"]::-moz-range-thumb{
   width:22px; height:22px; border-radius:50%; background:var(--paper); border:none; cursor:pointer;
 }
 
-select, textarea, input[type="text"]{
+select, textarea, input[type="text"], input[type="email"]{
   background:rgba(10,10,10,0.15);
   border:1.5px solid var(--line);
   color:var(--paper);
 }
-select:focus, textarea:focus, input[type="text"]:focus{
+select:focus, textarea:focus, input[type="text"]:focus, input[type="email"]:focus{
   outline:none;
   border-color:var(--paper);
 }
@@ -678,5 +678,12 @@ button:disabled{ cursor:not-allowed; }
   .timer-value-fluid{ font-size:min(10vw, 5.6vh, 50px); }
   #reveal-wrap{ gap:14px; }
 }
+
+/* Panel de catálogo */
+#screen-admin .card-dark select, #screen-admin .card-dark textarea, #screen-admin .card-dark input[type="text"], #screen-admin .card-dark input[type="email"]{
+  background:rgba(255,255,255,0.07);
+}
+.admin-row-inactive{ opacity:0.5; }
+.is-busy{ opacity:0.6; pointer-events:none; }
 
 @tailwind utilities;

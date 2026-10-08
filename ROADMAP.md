@@ -4,9 +4,14 @@
 
 Ver `docs/CHANGELOG.md`.
 
+## Hecho en v2.1.0
+
+- Proyecto Supabase `Inergo` (eu-west-1) con `public.challenges` (catálogo), `private.admin_emails` y `public.is_admin()`. RLS probada.
+- La app lee el catálogo con copia offline y tiene panel de administración con login por código.
+
 ## P1 — Usuarios reales (cuando la app se abra a la comunidad)
 
-Requiere que Alfonso cree las cuentas. Nada de esto está en el código todavía.
+Lo que falta para cuentas de usuario.
 
 ### Backend elegido: Supabase
 
@@ -27,7 +32,7 @@ Requiere que Alfonso cree las cuentas. Nada de esto está en el código todavía
 
 ### Tablas previstas
 
-- `challenges` — catálogo global (lectura pública; escritura solo admin). Permite editar retos sin desplegar.
+- `challenges` — catálogo global. **Ya existe** (v2.1.0).
 - `profiles` — 1:1 con `auth.users`: ajustes, rol (`user`/`admin`).
 - `completions` — un registro por reto completado (`id uuid` generado en el móvil, `user_id`, `challenge_id`, texto, categoría, xp, `completed_at`).
 - `custom_challenges`, `pending_challenges`, `disabled_defaults`, `active_challenge` — datos personales.
@@ -41,9 +46,15 @@ RLS en todas: `user_id = auth.uid()` para leer, crear, cambiar y borrar. XP y ra
 - En el cliente solo van `SUPABASE_URL` y la clave **anon** (pública por diseño; la seguridad la da RLS). La clave `service_role` **nunca** en el cliente ni en GitHub.
 - Al añadir Supabase: añadir `https://<proyecto>.supabase.co` a `connect-src` en la CSP de `vercel.json`.
 
-### Panel de administración (P1)
+### Panel de administración
 
-Pantalla oculta solo para `role = admin` para crear, editar y desactivar retos del catálogo desde el móvil.
+**Hecho en v2.1.0.** Siguiente mejora posible: estadísticas por reto (cuántas veces sale, se completa o se apunta), cuando haya analítica.
+
+### Antes del lanzamiento público
+
+- SMTP propio (Resend u otro) en Supabase: el de serie solo envía a emails del equipo.
+- Plan Pro de Supabase (no se pausa, copias diarias).
+- Dominio propio y, si se monetiza, Vercel Pro.
 
 ### Privacidad (obligatorio con cuentas)
 

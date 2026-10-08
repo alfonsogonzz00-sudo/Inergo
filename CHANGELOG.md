@@ -1,5 +1,12 @@
 # Cambios
 
+## v2.1.0
+
+- **Catálogo de retos en Supabase.** Los retos ya no van escritos en el código: se cargan desde la base de datos al abrir la app y se guarda una copia para usarla sin conexión. Si el servidor no responde, la app usa la última copia o los 103 retos de serie.
+- **Panel de administración dentro de la app** (Ajustes → Administración): entrar con un código por email, publicar retos nuevos, editarlos y desactivarlos. Cada categoría conserva su mecánica (Experiencia a pendientes, Conocimiento en dos fases).
+- **Seguridad:** solo los emails autorizados y confirmados pueden modificar el catálogo; lo impone la base de datos (RLS), no la app.
+- Los retos desactivados en «Mis retos» funcionan también con los retos nuevos del catálogo.
+
 ## v2.0.1
 
 - **Modo pruebas:** permite saltar un reto revelado para poder testear la app sin quedarte atado a cada reto. Se activa con `?test=1` o tocando 5 veces la versión en Ajustes; muestra la etiqueta «MODO PRUEBAS» en la home. Desactivado por defecto para todo el mundo.
@@ -31,7 +38,7 @@
 
 ### Técnica
 - CSS compilado y fuentes autoalojadas: sin dependencias externas, carga más rápida, funciona sin conexión.
-- Código separado en lógica (`js/inergo-core.js`) e interfaz (`js/inergo-app.js`). 23 tests de la lógica crítica.
+- Código separado en lógica (`js/inergo-core.js`) e interfaz (`js/inergo-app.js`). 27 tests de la lógica crítica.
 - Service worker nuevo: red primero para el HTML, caché versionada para el resto.
 - Cabeceras de seguridad y CSP estricta en `vercel.json`.
 - Validación de todos los datos guardados o importados.

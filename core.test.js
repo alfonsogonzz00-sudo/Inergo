@@ -177,7 +177,8 @@ test("migración: datos de la versión anterior se conservan", () => {
   const d = C.normalizeData(legacy);
   assert.equal(d.customChallenges.length, 1);
   assert.equal(d.customChallenges[0].duration, 600);
-  assert.deepEqual(d.disabledDefaultIds, ["espontanea-001"]);
+  // Se conservan aunque no estén en los 103 de serie: el catálogo remoto puede tener más.
+  assert.deepEqual(d.disabledDefaultIds, ["espontanea-001", "no-existe"]);
   assert.equal(d.completedLog.length, 1);
   assert.equal(d.pendingChallenges.length, 1);
   assert.equal(d.mirrorMode, true);
@@ -239,4 +240,62 @@ test("modo pruebas: desactivado por defecto y se conserva al guardar", () => {
   assert.equal(C.normalizeData({}).testMode, false);
   assert.equal(C.normalizeData({ schemaVersion:2, testMode:true }).testMode, true);
   assert.equal(C.normalizeData({ testMode:"sí" }).testMode, false);
+});
+
+/* ---------- Catálogo remoto (Supabase) ---------- */
+const row = (o) => Object.assign({ id:"espontanea-zz", text:"Reto remoto de prueba", category:"espontanea", duration_type:"timer",
+  duration_seconds:300, research_seconds:null, talk_seconds:null, points:20, active:true, sort_order:1 }, o);
+
+test("catálogo: convierte filas de la base de datos al formato de la app", () => {
+  const list = C.normalizeCatalog([
+    row({}),
+    row({ id:"experiencia-zz", category:"experiencia", duration_type:"pending", duration_seconds:null, points:50 }),
+    row({ id:"conocimiento-zz", category:"conocimiento", duration_type:"research", duration_seconds:null, research_seconds:600, talk_seconds:60 })
+  ]);
+  assert.equal(list.length, 3);
+  assert.deepEqual(list[0], C.mk("espontanea-zz", "Reto remoto de prueba", "espontanea", 300, 20));
+  assert.equal(list[1].durationType, "pending");
+  assert.equal(list[2].durationType, "research");
+  assert.equal(list[2].researchDuration, 600);
+});
+
+test("catálogo: descarta filas inactivas, incoherentes o duplicadas", () => {
+  const list = C.normalizeCatalog([
+    row({}),
+    row({}),                                                       // duplicada
+    row({ id:"x-inactivo", active:false }),
+    row({ id:"experiencia-mal", category:"experiencia" }),          // Experiencia con cronómetro
+    row({ id:"Mal Id", text:"Id con mayúsculas y espacios" }),
+    row({ id:"vacio-1", text:"   " }),
+    null, "basura"
+  ]);
+  assert.deepEqual(list.map(c => c.id), ["espontanea-zz"]);
+  assert.equal(C.normalizeCatalog([]), null, "lista vacía → se queda el catálogo de serie");
+  assert.equal(C.normalizeCatalog("no"), null);
+});
+
+test("catálogo: el sorteo usa el catálogo activo y vuelve al de serie si se vacía", () => {
+  const d = C.defaultData();
+  C.setCatalog(C.normalizeCatalog([row({})]));
+  assert.equal(C.pickChallenge(d, "todos").id, "espontanea-zz");
+  assert.equal(C.poolFor(d, "reflexion").length, 0);
+  C.setCatalog(null);
+  assert.equal(C.getCatalog().length, 103);
+  assert.equal(C.poolFor(d, "todos").length, 103);
+});
+
+test("panel: prepara filas válidas para la base de datos", () => {
+  const t = C.challengeToCatalogRow({ text:"  Habla   con 3 desconocidos ", category:"espontanea", durationSeconds:600 });
+  assert.deepEqual(t, { text:"Habla con 3 desconocidos", category:"espontanea", duration_type:"timer", duration_seconds:600, research_seconds:null, talk_seconds:null, points:20 });
+  const e = C.challengeToCatalogRow({ text:"Cena solo en un restaurante", category:"experiencia" });
+  assert.equal(e.duration_type, "pending"); assert.equal(e.duration_seconds, null); assert.equal(e.points, 50);
+  const k = C.challengeToCatalogRow({ text:"Investiga qué es la sinestesia", category:"conocimiento" });
+  assert.equal(k.research_seconds, 600); assert.equal(k.talk_seconds, 60);
+  assert.throws(() => C.challengeToCatalogRow({ text:"corto", category:"espontanea", durationSeconds:300 }), /concreto/);
+  assert.throws(() => C.challengeToCatalogRow({ text:"Reto sin tiempo válido", category:"reflexion", durationSeconds:5 }), /duración/);
+  assert.throws(() => C.challengeToCatalogRow({ text:"Categoría inventada", category:"habito" }), /Categoría/);
+  // Lo que genera el panel lo acepta el lector del catálogo (mismas reglas que la base de datos)
+  const id = C.newCatalogId("espontanea", 1700000000000);
+  assert.match(id, /^[a-z0-9-]{1,80}$/);
+  assert.ok(C.catalogRowToChallenge(Object.assign({ id, active:true }, t)));
 });

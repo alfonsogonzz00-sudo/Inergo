@@ -1,6 +1,6 @@
 # INERGO — Te toca.
 
-App web instalable (PWA) que propone un reto incómodo para que lo hagas y lo grabes. HTML + CSS + JavaScript sin framework. Sin backend: todo el progreso se guarda en el navegador (`localStorage`).
+App web instalable (PWA) que propone un reto incómodo para que lo hagas y lo grabes. HTML + CSS + JavaScript sin framework. El **catálogo de retos** vive en **Supabase**; el **progreso de cada persona** se guarda en su navegador (`localStorage`).
 
 **Flujo:** abrir INERGO → elegir categoría → PLAY → sorteo → aparece el reto → TE TOCA → EMPEZAR / INVESTIGAR / APUNTAR → LO HE HECHO → se actualiza el progreso.
 
@@ -14,6 +14,30 @@ Permite **saltar un reto ya revelado** sin completarlo (no suma XP ni racha). Pa
 - **Se nota:** en la home aparece la etiqueta negra «MODO PRUEBAS» y, durante un reto, el enlace «Saltar reto · modo pruebas».
 - **Desactivar:** interruptor «Modo pruebas» en Ajustes, `?test=0` o otros 5 toques en la versión. **Desactívalo antes de grabar.**
 
+## Catálogo de retos (Supabase)
+
+Los retos que salen al tirar se gestionan **desde la propia app**, sin tocar código ni GitHub.
+
+- **Entrar:** Ajustes → *Administración → Catálogo de retos → Abrir* (la sección aparece en modo pruebas o con la sesión iniciada). Pon tu email, te llega un código de 6 cifras y entras.
+- **Añadir:** escribe el reto, elige categoría (y tiempo si es Espontánea o Reflexión) y *Publicar reto*. Sale al tirar en cuanto se publica.
+- **Editar / desactivar:** desde la lista. Desactivar no borra: el reto deja de salir y se puede reactivar.
+- **Cada categoría tiene su mecánica:** Espontánea y Reflexión con cronómetro, Experiencia va a Pendientes, Conocimiento investiga 10 min y habla 1 min. La base de datos no permite mezclarlas.
+- **Sin conexión:** la app usa la última lista descargada; si nunca ha conectado, los 103 retos de serie (`js/inergo-core.js`).
+- **Quién puede editar:** solo los emails de la tabla privada `private.admin_emails`, y solo con el email confirmado. Para añadir a alguien, en Supabase → SQL Editor:
+  `insert into private.admin_emails (email) values ('otra@persona.com');`
+
+### Configuración de Supabase (una sola vez)
+
+1. **Authentication → Email Templates → Magic Link** y **Confirm signup**: añade `{{ .Token }}` al texto del email (por ejemplo `<p>Tu código: <strong>{{ .Token }}</strong></p>`). Sin esto, el email solo trae un enlace y no un código.
+2. **Authentication → URL Configuration:** *Site URL* `https://inergo.vercel.app` y en *Redirect URLs* añade `https://inergo.vercel.app/**`. Así también funciona el enlace del email.
+3. **Antes de abrir la app al público:** configura un SMTP propio (Authentication → SMTP; por ejemplo Resend). El servicio de email de serie de Supabase solo envía a los emails del equipo del proyecto y con muy pocos envíos por hora.
+
+### Base de datos
+
+- `supabase/migrations/` — tablas, función `is_admin()` y reglas de seguridad (RLS). Ya aplicadas en el proyecto `Inergo` (eu-west-1).
+- `supabase/seed.sql` — los 103 retos de serie con los mismos ids que la app. Se puede ejecutar varias veces sin duplicar.
+- Configuración pública del cliente en `js/inergo-config.js` (URL y clave *publishable*, públicas por diseño). **Nunca** pongas ahí la clave *secret* ni la *service_role*.
+
 ---
 
 ## Estructura
@@ -21,8 +45,11 @@ Permite **saltar un reto ya revelado** sin completarlo (no suma XP ni racha). Pa
 ```
 inergo.html              ← la app (solo marcado; sin código en línea)
 inergo.css               ← estilos COMPILADOS (no editar a mano)
-js/inergo-core.js        ← lógica pura: catálogo de retos, sorteo, XP, racha, reto activo, copias
-js/inergo-app.js         ← interfaz: pantallas, animaciones, sonido, ajustes
+js/inergo-config.js      ← URL y clave pública de Supabase
+js/inergo-core.js        ← lógica pura: retos de serie, catálogo, sorteo, XP, racha, reto activo, copias
+js/inergo-cloud.js       ← conexión con Supabase: catálogo, inicio de sesión, gestión de retos
+js/inergo-app.js         ← interfaz: pantallas, animaciones, sonido, ajustes, panel de catálogo
+supabase/                ← migraciones SQL y retos de serie
 fonts/                   ← Inter y Manrope autoalojadas (funcionan sin conexión)
 manifest.json            ← datos de instalación (nombre, iconos, accesos directos)
 sw.js                    ← service worker: offline y actualizaciones
@@ -37,8 +64,8 @@ docs/ROADMAP.md          ← lo siguiente: cuentas, sincronización, push, anal�
 ## Subir a GitHub (sin terminal)
 
 1. Abre el repositorio en GitHub desde **Chrome** → **Add file → Upload files**.
-2. Arrastra **todo el contenido** de la carpeta `inergo` (archivos **y** carpetas `js`, `fonts`, `tools`, `tests`, `docs`).
-3. Mensaje del commit, por ejemplo `INERGO v2.0.1`, y **Commit changes**.
+2. Arrastra **todo el contenido** de la carpeta descomprimida (archivos **y** carpetas `js`, `fonts`, `supabase`, `tools`, `tests`, `docs`).
+3. Mensaje del commit, por ejemplo `INERGO v2.1.0`, y **Commit changes**.
 4. Vercel despliega solo en 1-2 minutos.
 
 No hay que borrar nada del repositorio: los archivos con el mismo nombre se sustituyen y el resto son nuevos. No hay que tocar la configuración de Vercel (sigue siendo un sitio estático, sin paso de compilación).
@@ -50,7 +77,7 @@ No hay que borrar nada del repositorio: los archivos con el mismo nombre se sust
 1. Sube el número de versión en **tres** sitios, todos iguales:
    - `js/inergo-core.js` → `APP_VERSION`
    - `sw.js` → `VERSION`
-   - `inergo.html` → los tres `?v=` de `inergo.css`, `inergo-core.js` e `inergo-app.js`
+   - `inergo.html` → todos los `?v=` (`inergo.css` y los cuatro `js/…`)
 2. Si cambiaste clases o estilos, regenera el CSS (abajo).
 3. Pasa los tests (abajo).
 
@@ -89,12 +116,13 @@ El service worker solo funciona por `https://` o `localhost`.
 
 ## Datos y privacidad
 
-- Todo vive en `localStorage` con la clave `inergo_data_v1` (**no cambiarla**: es el progreso de la gente). El formato lleva `schemaVersion` y se migra solo.
-- Ningún dato sale del dispositivo. No hay cookies, cuentas ni analítica.
+- El progreso vive en `localStorage` con la clave `inergo_data_v1` (**no cambiarla**: es el progreso de la gente). El formato lleva `schemaVersion` y se migra solo.
+- El progreso no sale del dispositivo. La app solo descarga el catálogo de retos (sin enviar datos personales). No hay cookies ni analítica. Solo los administradores inician sesión.
 - *Ajustes* permite exportar, importar y borrar todo.
 
 ## Seguridad
 
 - `vercel.json` aplica CSP estricta (solo recursos propios, sin scripts en línea), `nosniff`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy` (cámara y micrófono permitidos solo para la propia app, de cara a la futura «Caja Negra»).
 - Todo texto escrito por el usuario o importado se valida y se escapa antes de pintarse.
-- Si en el futuro se añade un servicio externo (Supabase, analítica), hay que añadir su dominio a `connect-src` en la CSP.
+- La CSP solo permite conectar con el propio dominio y con el proyecto de Supabase. Si se añade otro servicio (analítica…), hay que añadir su dominio a `connect-src`.
+- Permisos garantizados por la base de datos: cualquiera lee los retos activos; solo administradores (email confirmado en `private.admin_emails`) crean, editan o desactivan. Probado como visitante anónimo, como usuario normal y con un token falsificado con el email del administrador.

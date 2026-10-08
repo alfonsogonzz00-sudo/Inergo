@@ -17,7 +17,7 @@
 })(typeof self !== "undefined" ? self : this, function(){
   "use strict";
 
-  const APP_VERSION = "2.0.1";
+  const APP_VERSION = "2.1.0";
   const STORAGE_KEY = "inergo_data_v1"; // NO cambiar: contiene el progreso de los usuarios
   const SCHEMA_VERSION = 2;
 
@@ -181,7 +181,10 @@
     mkK("conocimiento-060","Investiga en qué consistió la Guerra de las Comunidades de Castilla y prepárate para explicarlo.")
   ];
 
-  const DEFAULT_IDS = new Set(DEFAULT_CHALLENGES.map(c => c.id));
+  /* El catálogo vivo viene de Supabase (ver js/inergo-cloud.js). Estos 103
+     retos son la copia de serie: se usan la primera vez sin conexión o si
+     el servidor no responde. */
+  let catalog = DEFAULT_CHALLENGES;
 
   const MICROCOPY = ["NO HAY VUELTA ATRÁS.","PIÉNSALO MENOS.","AHORA HAZLO.","NO HAY EXCUSAS.","DEJA DE PENSAR.","YA LO HAS VISTO.","EMPIEZA."];
 
@@ -309,7 +312,7 @@
     base.customChallenges = base.customChallenges.filter(c => !seenCustom.has(c.id) && seenCustom.add(c.id));
 
     base.disabledDefaultIds = Array.isArray(parsed.disabledDefaultIds)
-      ? Array.from(new Set(parsed.disabledDefaultIds.filter(id => typeof id === "string" && DEFAULT_IDS.has(id))))
+      ? Array.from(new Set(parsed.disabledDefaultIds.filter(id => safeId(id)))).slice(0, 2000)
       : [];
 
     base.completedLog = Array.isArray(parsed.completedLog)
@@ -366,6 +369,85 @@
     base.selectedCategory = CATEGORIES.some(c => c.id === parsed.selectedCategory) ? parsed.selectedCategory : "todos";
     return base;
   }
+
+  /* =========================================================
+     2b. CATÁLOGO REMOTO (filas de la tabla public.challenges)
+  ========================================================= */
+  const CATALOG_ID = /^[a-z0-9-]{1,80}$/;
+  const CATEGORY_TYPE = { espontanea:"timer", reflexion:"timer", experiencia:"pending", conocimiento:"research" };
+  const CATEGORY_POINTS = { espontanea:20, experiencia:50, reflexion:15, conocimiento:20 };
+
+  // Convierte una fila de la base de datos al formato que usa la app.
+  // Devuelve null si la fila no es coherente (nunca debería pasar: la base
+  // de datos tiene las mismas reglas como restricciones).
+  function catalogRowToChallenge(row){
+    if(!isObj(row)) return null;
+    const id = typeof row.id === "string" && CATALOG_ID.test(row.id) ? row.id : null;
+    const text = str(row.text, 400);
+    const category = row.category;
+    if(!id || !text || !CATEGORY_TYPE[category] || row.duration_type !== CATEGORY_TYPE[category]) return null;
+    const points = nonNegInt(row.points, CATEGORY_POINTS[category]);
+    if(row.duration_type === "pending") return mkP(id, text, category, points);
+    if(row.duration_type === "research"){
+      const r = nonNegInt(row.research_seconds, 0), t = nonNegInt(row.talk_seconds, 0);
+      if(!r || !t) return null;
+      return { id, text, category, durationType:"research", researchDuration:r, talkDuration:t, points };
+    }
+    const d = nonNegInt(row.duration_seconds, 0);
+    if(d < 30) return null;
+    return mk(id, text, category, d, points);
+  }
+
+  // Filas → lista jugable (solo activas, sin duplicados, en el orden del servidor).
+  function normalizeCatalog(rows){
+    if(!Array.isArray(rows)) return null;
+    const seen = new Set();
+    const list = [];
+    rows.forEach(row => {
+      if(!row || row.active === false) return;
+      const c = catalogRowToChallenge(row);
+      if(c && !seen.has(c.id)){ seen.add(c.id); list.push(c); }
+    });
+    return list.length ? list : null;
+  }
+
+  // Reto → fila para guardar en la base de datos (panel de administración).
+  function challengeToCatalogRow({ id, text, category, durationSeconds }){
+    const type = CATEGORY_TYPE[category];
+    if(!type) throw new Error("Categoría no válida.");
+    const clean = String(text || "").trim().replace(/\s+/g, " ");
+    if(clean.length < 6) throw new Error("Escribe un reto un poco más concreto.");
+    if(clean.length > 400) throw new Error("El reto es demasiado largo (máximo 400 caracteres).");
+    const row = {
+      text: clean,
+      category,
+      duration_type: type,
+      duration_seconds: null,
+      research_seconds: null,
+      talk_seconds: null,
+      points: CATEGORY_POINTS[category]
+    };
+    if(id) row.id = id;
+    if(type === "timer"){
+      const d = nonNegInt(durationSeconds, 0);
+      if(d < 30 || d > 7200) throw new Error("Elige una duración entre 30 segundos y 2 horas.");
+      row.duration_seconds = d;
+    }
+    if(type === "research"){ row.research_seconds = 600; row.talk_seconds = 60; }
+    return row;
+  }
+
+  function newCatalogId(category, now){
+    const t = (now === undefined ? Date.now() : now).toString(36);
+    const r = Math.floor(Math.random() * 36 * 36).toString(36).padStart(2, "0");
+    return category + "-" + t + r;
+  }
+
+  function setCatalog(list){
+    catalog = Array.isArray(list) && list.length ? list : DEFAULT_CHALLENGES;
+    return catalog;
+  }
+  function getCatalog(){ return catalog; }
 
   /* =========================================================
      3. FECHAS Y RACHA (siempre en hora local del dispositivo)
@@ -426,7 +508,7 @@
      4. SORTEO
   ========================================================= */
   function allActiveChallenges(data){
-    const defaults = DEFAULT_CHALLENGES.filter(c => !data.disabledDefaultIds.includes(c.id));
+    const defaults = catalog.filter(c => !data.disabledDefaultIds.includes(c.id));
     return defaults.concat(data.customChallenges);
   }
 
@@ -535,6 +617,8 @@
     localDateKey, previousDateKey, effectiveStreak, totalCompleted, applyCompletion,
     allActiveChallenges, poolFor, pickChallenge, registerRecent,
     createActive, startTimedPhase, setPhase, remainingSeconds, resolveActive, TIMED_PHASES,
-    buildBackup, parseBackup, safeId
+    buildBackup, parseBackup, safeId,
+    CATEGORY_TYPE, CATEGORY_POINTS,
+    catalogRowToChallenge, normalizeCatalog, challengeToCatalogRow, newCatalogId, setCatalog, getCatalog
   };
 });

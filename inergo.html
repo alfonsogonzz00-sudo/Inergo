@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#FF6347">
 <meta name="color-scheme" content="light">
 <link rel="canonical" href="https://inergo.vercel.app/">
+<link rel="preconnect" href="https://wobatwkkvmuxnfhhgzzu.supabase.co" crossorigin>
 
 <!-- Compartir enlace (WhatsApp, Instagram, X, iMessage…) -->
 <meta property="og:type" content="website">
@@ -39,9 +40,11 @@
 <!-- Fuentes y estilos propios (sin dependencias externas: funciona sin conexión) -->
 <link rel="preload" href="fonts/manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="inergo.css?v=2.0.1">
-<script src="js/inergo-core.js?v=2.0.1" defer></script>
-<script src="js/inergo-app.js?v=2.0.1" defer></script>
+<link rel="stylesheet" href="inergo.css?v=2.1.0">
+<script src="js/inergo-config.js?v=2.1.0" defer></script>
+<script src="js/inergo-core.js?v=2.1.0" defer></script>
+<script src="js/inergo-cloud.js?v=2.1.0" defer></script>
+<script src="js/inergo-app.js?v=2.1.0" defer></script>
 </head>
 <body>
 
@@ -383,6 +386,16 @@
       </div>
 
       <div>
+        <div id="admin-section" class="hidden mb-8">
+          <p class="set-section-title">Administración</p>
+          <div class="set-row">
+            <div>
+              <p class="set-row-label">Catálogo de retos</p>
+              <p class="set-row-hint" id="admin-entry-hint">Añade, edita y desactiva los retos que salen al tirar.</p>
+            </div>
+            <button data-nav="admin" class="btn-invert rounded-full px-5 py-2.5 font-display font-black text-xs tight-sm uppercase shrink-0">Abrir</button>
+          </div>
+        </div>
         <p class="set-section-title">App</p>
         <div class="set-row">
           <div>
@@ -441,6 +454,97 @@
       </div>
 
       <p id="version-label" class="font-num text-[11px] uppercase tracking-wide opacity-60 select-none"></p>
+    </div>
+  </section>
+
+  <!-- ============ CATÁLOGO (solo administración) ============ -->
+  <section class="screen" id="screen-admin" data-screen="admin">
+    <div class="flex items-center gap-3 pt-1 pb-5 shrink-0">
+      <button data-nav="settings" aria-label="Volver a Ajustes" class="icon-btn opacity-90 active:opacity-60">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h2 tabindex="-1" class="screen-heading font-display font-black text-2xl tight-sm uppercase outline-none">Catálogo</h2>
+    </div>
+
+    <div class="flex-1 overflow-y-auto overflow-x-hidden scrollbar-none flex flex-col gap-8 pb-8">
+
+      <!-- Sin sesión: entrar con código por email -->
+      <div id="admin-login" class="hidden card-dark rounded-3xl p-5 flex-col gap-4">
+        <p class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Acceso de administración</p>
+        <div id="admin-login-email" class="flex flex-col gap-3">
+          <label for="admin-email" class="text-sm opacity-80 leading-snug">Te enviaremos un código de 6 cifras a tu email.</label>
+          <input id="admin-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" class="w-full rounded-xl px-4 py-3 font-medium text-base" placeholder="tu@email.com">
+          <button id="admin-send-code" class="btn-invert self-start rounded-full px-6 py-3 font-display font-black text-sm tight-sm uppercase">Enviar código</button>
+        </div>
+        <div id="admin-login-code" class="hidden flex-col gap-3">
+          <label for="admin-code" class="text-sm opacity-80 leading-snug">Escribe el código que te ha llegado a <strong id="admin-email-sent"></strong>. Si en vez de un código te llega un enlace, ábrelo en este mismo navegador.</label>
+          <input id="admin-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" class="w-full rounded-xl px-4 py-3 font-num font-bold text-2xl tracking-[0.3em]" placeholder="000000">
+          <div class="flex gap-3 flex-wrap">
+            <button id="admin-verify" class="btn-invert rounded-full px-6 py-3 font-display font-black text-sm tight-sm uppercase">Entrar</button>
+            <button id="admin-change-email" class="btn-ghost rounded-full px-5 py-3 font-display font-bold text-xs uppercase">Cambiar email</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Con sesión pero sin permisos -->
+      <div id="admin-denied" class="hidden card-dark rounded-3xl p-5 flex-col gap-3">
+        <p class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Sin permisos</p>
+        <p class="text-sm opacity-85 leading-snug">La cuenta <strong class="admin-session-email"></strong> no es de administración.</p>
+        <button class="admin-signout btn-ghost self-start rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase">Cerrar sesión</button>
+      </div>
+
+      <!-- Administrador -->
+      <div id="admin-panel" class="hidden flex-col gap-8">
+        <div class="flex items-center justify-between gap-3">
+          <p class="font-num text-[11px] uppercase tracking-wide opacity-75 truncate">Sesión: <span class="admin-session-email"></span></p>
+          <button class="admin-signout font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 -my-2 shrink-0">Cerrar sesión</button>
+        </div>
+
+        <form id="admin-form" class="card-dark rounded-3xl p-5 flex flex-col gap-4" novalidate>
+          <label for="admin-text" id="admin-form-title" class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Nuevo reto</label>
+          <textarea id="admin-text" rows="3" maxlength="400" class="w-full rounded-xl px-4 py-3 font-medium text-base resize-none" placeholder="Ej: Pregunta a tres desconocidos cuál fue el mejor día de su vida."></textarea>
+          <div class="flex flex-col gap-2">
+            <label for="admin-category" class="font-num text-[11px] uppercase tracking-wide opacity-60">Categoría</label>
+            <select id="admin-category" class="w-full rounded-xl px-4 py-3 font-semibold text-sm">
+              <option value="espontanea">ESPONTÁNEA · cronómetro</option>
+              <option value="experiencia">EXPERIENCIA · va a pendientes</option>
+              <option value="reflexion">REFLEXIÓN · cronómetro</option>
+              <option value="conocimiento">CONOCIMIENTO · investigar 10 min + hablar 1 min</option>
+            </select>
+          </div>
+          <div id="admin-duration-wrap" class="flex flex-col gap-2">
+            <label for="admin-duration" class="font-num text-[11px] uppercase tracking-wide opacity-60">Tiempo</label>
+            <select id="admin-duration" class="w-full rounded-xl px-4 py-3 font-semibold text-sm">
+              <option value="60">1 min</option>
+              <option value="120">2 min</option>
+              <option value="300" selected>5 min</option>
+              <option value="420">7 min</option>
+              <option value="480">8 min</option>
+              <option value="600">10 min</option>
+              <option value="900">15 min</option>
+              <option value="1200">20 min</option>
+              <option value="1800">30 min</option>
+              <option value="2700">45 min</option>
+              <option value="3600">60 min</option>
+            </select>
+          </div>
+          <p id="admin-points-hint" class="font-num text-[11px] uppercase tracking-wide opacity-60"></p>
+          <div class="flex gap-3 flex-wrap">
+            <button id="admin-save" type="submit" class="btn-invert rounded-full px-7 py-3 font-display font-black text-sm tight-sm uppercase">Publicar reto</button>
+            <button id="admin-cancel-edit" type="button" class="hidden btn-ghost rounded-full px-6 py-3 font-display font-bold text-sm uppercase">Cancelar</button>
+          </div>
+        </form>
+
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <p class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Retos publicados</p>
+            <p id="admin-count" class="font-num text-[11px] uppercase tracking-wide opacity-70"></p>
+          </div>
+          <div id="admin-filter" role="group" aria-label="Filtrar por categoría" class="flex gap-2 overflow-x-auto scrollbar-none pb-3"></div>
+          <div id="admin-list" class="flex flex-col gap-2"></div>
+        </div>
+      </div>
+
     </div>
   </section>
 
