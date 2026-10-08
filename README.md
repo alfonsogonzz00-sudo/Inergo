@@ -1,120 +1,100 @@
 # INERGO — Te toca.
 
-Single Page Web App (HTML + Tailwind CDN + JavaScript vanilla), instalable como **app (PWA)** tanto en móvil como en escritorio. Sin backend, sin build, sin dependencias que instalar. Todo el estado se guarda en `localStorage` del navegador.
+App web instalable (PWA) que propone un reto incómodo para que lo hagas y lo grabes. HTML + CSS + JavaScript sin framework. Sin backend: todo el progreso se guarda en el navegador (`localStorage`).
 
-**Flujo:** grabar pantalla → abrir INERGO → elegir categoría → PLAY → animación de selección → aparece el reto → TE TOCA → EMPEZAR → temporizador → LO HE HECHO.
+**Flujo:** abrir INERGO → elegir categoría → PLAY → sorteo → aparece el reto → TE TOCA → EMPEZAR / INVESTIGAR / APUNTAR → LO HE HECHO → se actualiza el progreso.
 
-No existe ningún botón para rechazar, cambiar o saltar un reto una vez revelado. Esa es la regla central de la app.
+**Regla central:** una vez pulsado PLAY, el reto no se puede rechazar, cambiar ni saltar. Desde la v2 esto se cumple también si sales a la home, recargas o cierras la app: al volver, INERGO te devuelve al mismo reto.
+
+## Modo pruebas (solo para testear)
+
+Permite **saltar un reto ya revelado** sin completarlo (no suma XP ni racha). Para cualquier otro usuario la regla sigue intacta.
+
+- **Activar:** abre `inergo.vercel.app/?test=1`, o en la app instalada ve a **Ajustes y toca 5 veces el texto de la versión** (abajo del todo).
+- **Se nota:** en la home aparece la etiqueta negra «MODO PRUEBAS» y, durante un reto, el enlace «Saltar reto · modo pruebas».
+- **Desactivar:** interruptor «Modo pruebas» en Ajustes, `?test=0` o otros 5 toques en la versión. **Desactívalo antes de grabar.**
 
 ---
 
-## Estructura del proyecto
+## Estructura
 
 ```
-inergo/
-├── inergo.html              ← toda la app (HTML, CSS y JS en un único archivo)
-├── manifest.json            ← metadatos de la PWA (nombre, iconos, colores)
-├── sw.js                    ← service worker (permite instalarla y abrirla sin conexión)
-├── vercel.json              ← hace que la URL raíz cargue inergo.html automáticamente
-├── icon-192.png
-├── icon-512.png
-├── icon-maskable-512.png    ← icono con margen de seguridad para Android
-└── apple-touch-icon.png     ← icono para "Añadir a pantalla de inicio" en iOS
+inergo.html              ← la app (solo marcado; sin código en línea)
+inergo.css               ← estilos COMPILADOS (no editar a mano)
+js/inergo-core.js        ← lógica pura: catálogo de retos, sorteo, XP, racha, reto activo, copias
+js/inergo-app.js         ← interfaz: pantallas, animaciones, sonido, ajustes
+fonts/                   ← Inter y Manrope autoalojadas (funcionan sin conexión)
+manifest.json            ← datos de instalación (nombre, iconos, accesos directos)
+sw.js                    ← service worker: offline y actualizaciones
+vercel.json              ← "/" carga inergo.html + cabeceras de seguridad
+og-image.png             ← imagen al compartir el enlace (WhatsApp, Instagram…)
+icon-*.png, apple-touch-icon.png
+tools/                   ← fuente del CSS y configuración de Tailwind (no se usa en producción)
+tests/                   ← tests de la lógica crítica
+docs/ROADMAP.md          ← lo siguiente: cuentas, sincronización, push, analítica
 ```
 
-Todos los archivos deben subirse juntos, en la misma carpeta — `manifest.json` y `sw.js` referencian los iconos y `inergo.html` con rutas relativas.
+## Subir a GitHub (sin terminal)
 
-> **Si vienes de una versión anterior del proyecto:** el archivo principal se llamaba `index.html` y ahora se llama `inergo.html`. Borra el `index.html` viejo de tu repositorio de GitHub para que no queden los dos sueltos a la vez, y sube `vercel.json` (es nuevo).
+1. Abre el repositorio en GitHub desde **Chrome** → **Add file → Upload files**.
+2. Arrastra **todo el contenido** de la carpeta `inergo` (archivos **y** carpetas `js`, `fonts`, `tools`, `tests`, `docs`).
+3. Mensaje del commit, por ejemplo `INERGO v2.0.1`, y **Commit changes**.
+4. Vercel despliega solo en 1-2 minutos.
 
-## Ejecutar en local
+No hay que borrar nada del repositorio: los archivos con el mismo nombre se sustituyen y el resto son nuevos. No hay que tocar la configuración de Vercel (sigue siendo un sitio estático, sin paso de compilación).
 
-No requiere servidor ni instalación para probar la app en el navegador:
+**Quien ya tenga la app instalada** verá la versión nueva la segunda vez que la abra (la primera el móvil descarga la actualización en segundo plano). Su progreso se conserva.
 
-1. Descarga toda la carpeta `inergo` (no solo `inergo.html`).
-2. Haz doble clic sobre `inergo.html` para abrirlo, o arrástralo a una pestaña.
-3. Listo — funciona igual en desktop y en móvil.
+## Publicar una versión nueva (para quien mantenga el código)
 
-**Para instalarla como app** (icono, pantalla completa, funciona sin conexión) hace falta servirla por `http://` o `https://` — abrir el archivo directamente con `file://` no activa el service worker. Sírvela así:
+1. Sube el número de versión en **tres** sitios, todos iguales:
+   - `js/inergo-core.js` → `APP_VERSION`
+   - `sw.js` → `VERSION`
+   - `inergo.html` → los tres `?v=` de `inergo.css`, `inergo-core.js` e `inergo-app.js`
+2. Si cambiaste clases o estilos, regenera el CSS (abajo).
+3. Pasa los tests (abajo).
+
+Si se olvida subir la versión, los usuarios con la app instalada pueden seguir viendo CSS/JS antiguos.
+
+### Regenerar el CSS
+
+Los estilos se escriben en `tools/tailwind.input.css` y se compilan a `inergo.css`. Desde la raíz del repo:
 
 ```bash
-cd inergo
-python3 -m http.server 8000
-# abre http://localhost:8000/inergo.html en el navegador
-# o, desde el móvil en la misma red: http://TU_IP_LOCAL:8000/inergo.html
+npx tailwindcss@3 -c tools/tailwind.config.js -i tools/tailwind.input.css -o inergo.css --minify
 ```
+
+### Tests
+
+```bash
+node --test tests/core.test.js
+```
+
+Cubren: catálogo íntegro (103 retos), XP por categoría, sorteo (filtros, pendientes, desactivados, repeticiones), racha en hora local (incluido el cambio de hora), total de retos, reto activo y temporizador con la app cerrada, migración desde la v1, importación de copias manipuladas.
+
+## Probar en local
+
+```bash
+python3 -m http.server 8000
+# http://localhost:8000/inergo.html
+```
+
+El service worker solo funciona por `https://` o `localhost`.
 
 ## Instalar como app
 
-### En iPhone / iPad (Safari)
-1. Abre la URL de la app en Safari.
-2. Toca el icono de **Compartir** (el cuadrado con la flecha hacia arriba).
-3. Baja hasta **"Añadir a pantalla de inicio"** y confirma.
-4. Aparecerá un icono de INERGO en tu pantalla de inicio; al abrirlo, se abre a pantalla completa, sin la barra de Safari.
+- **iPhone (Safari):** Compartir → «Añadir a pantalla de inicio». La app instalada **no comparte el progreso con Safari**: usa *Ajustes → Exportar copia* en Safari e *Importar copia* dentro de la app.
+- **Android (Chrome):** *Ajustes → Instalar* dentro de INERGO, o menú ⋮ → «Instalar app».
+- **Ordenador (Chrome, Edge):** *Ajustes → Instalar*, o el icono de instalar de la barra de direcciones.
 
-### En Android (Chrome)
-1. Abre la URL de la app en Chrome.
-2. Toca el menú (los tres puntos, arriba a la derecha).
-3. Selecciona **"Instalar app"** o **"Añadir a pantalla de inicio"**.
-4. Se instala como una app más, con su propio icono y su propia ventana.
+## Datos y privacidad
 
-### En ordenador (Chrome, Edge)
-1. Abre la URL de la app.
-2. En la barra de direcciones, a la derecha, aparecerá un icono de instalación (una pantalla con una flecha, o "+").
-3. Pulsa **Instalar**. Se abre como una ventana independiente, sin las pestañas ni la barra del navegador.
+- Todo vive en `localStorage` con la clave `inergo_data_v1` (**no cambiarla**: es el progreso de la gente). El formato lleva `schemaVersion` y se migra solo.
+- Ningún dato sale del dispositivo. No hay cookies, cuentas ni analítica.
+- *Ajustes* permite exportar, importar y borrar todo.
 
-> La app también funciona perfectamente como página web normal, sin instalarla — instalarla solo añade el icono, la pantalla completa y el acceso sin conexión.
+## Seguridad
 
----
-
-## Desplegar en Vercel
-
-1. Crea una cuenta gratuita en [vercel.com](https://vercel.com) (puedes registrarte con GitHub, GitLab o email).
-2. En el dashboard, pulsa **Add New → Project**.
-3. Si tu código está en GitHub: importa el repositorio que contiene la carpeta `inergo`. Si no usas Git, pulsa la pestaña que permite **subir una carpeta directamente** (Vercel CLI, ver abajo, es la vía más rápida sin Git).
-4. **Configurar el proyecto:** al ser HTML estático sin build, deja el *Framework Preset* en **Other**, el *Build Command* vacío y el *Output Directory* como `.` (raíz).
-5. Pulsa **Deploy**.
-6. En unos segundos obtendrás una URL del tipo `https://tu-proyecto.vercel.app`. Gracias al archivo `vercel.json`, esa URL raíz carga automáticamente `inergo.html` sin que tengas que escribir nada más al final. Al ser `https://`, el service worker funciona automáticamente y la app ya se puede instalar.
-7. **Dominio propio (opcional):** en el proyecto, ve a **Settings → Domains**, añade tu dominio y sigue las instrucciones para apuntar los registros DNS (CNAME o A) que te indique Vercel.
-
-### Alternativa rápida sin usar la web (Vercel CLI)
-
-```bash
-npm install -g vercel
-cd inergo
-vercel
-# sigue las preguntas en pantalla (login, nombre de proyecto, etc.)
-vercel --prod   # para publicar la versión definitiva
-```
-
----
-
-## Desplegar en Netlify
-
-1. Crea una cuenta gratuita en [netlify.com](https://netlify.com).
-2. En el dashboard, pulsa **Add new site → Deploy manually** (o "Import from Git" si tu código está en GitHub).
-3. **Deploy manual:** arrastra la carpeta `inergo` completa (con todos sus archivos, no solo `inergo.html`) al recuadro de subida.
-4. Netlify sube y publica el proyecto automáticamente — no hay build que configurar porque es HTML estático.
-5. En unos segundos obtendrás una URL del tipo `https://nombre-aleatorio.netlify.app`, ya en `https://` y lista para instalarse.
-6. **Importante en Netlify:** el archivo `vercel.json` no le sirve a Netlify (es específico de Vercel). Si despliegas aquí, la URL raíz no cargará `inergo.html` sola — tendrás que compartir la URL completa `https://tu-sitio.netlify.app/inergo.html`, o renombrar `inergo.html` a `index.html` solo para este despliegue.
-7. **Dominio propio (opcional):** en el sitio, ve a **Site configuration → Domain management → Add a domain**, añade tu dominio y sigue las instrucciones DNS que te indique Netlify.
-
-### Alternativa con Netlify CLI
-
-```bash
-npm install -g netlify-cli
-cd inergo
-netlify deploy          # deploy de prueba
-netlify deploy --prod   # deploy definitivo
-```
-
----
-
-## Notas técnicas
-
-- **Sin backend ni base de datos.** Todo el progreso (XP, racha, historial, retos personalizados, retos pendientes) vive en `localStorage`, por lo que es local a cada navegador/dispositivo — instalar la app en el móvil y en el ordenador crea dos progresos independientes.
-- **PWA (Progressive Web App):** `manifest.json` define nombre, iconos y colores; `sw.js` es el service worker que cachea la app para que abra incluso sin conexión una vez visitada por primera vez. Solo funciona instalada/servida por `https://` (o `localhost`); no funciona abriendo `inergo.html` directamente con doble clic.
-- **Tailwind vía CDN** — no requiere `npm install` ni proceso de build.
-- **Web Audio API** para los sonidos (click, ticks, revelación, completar) — no hay archivos de audio externos.
-- Borrar los datos del navegador (o usar modo incógnito, o desinstalar la app) reinicia el progreso.
-- Los retos de la app están diseñados para generar exposición e incomodidad social, nunca situaciones peligrosas, ilegales o que invadan la privacidad de terceros.
-
+- `vercel.json` aplica CSP estricta (solo recursos propios, sin scripts en línea), `nosniff`, `X-Frame-Options`, `Referrer-Policy` y `Permissions-Policy` (cámara y micrófono permitidos solo para la propia app, de cara a la futura «Caja Negra»).
+- Todo texto escrito por el usuario o importado se valida y se escapa antes de pintarse.
+- Si en el futuro se añade un servicio externo (Supabase, analítica), hay que añadir su dominio a `connect-src` en la CSP.

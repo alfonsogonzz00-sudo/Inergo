@@ -2,11 +2,31 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>INERGO — Quemando los barcos.</title>
-<meta name="description" content="INERGO propone un reto. Tú lo grabas.">
+<meta name="description" content="INERGO propone un reto. Tú lo grabas. Sal de tu zona de confort.">
 <meta name="theme-color" content="#FF6347">
+<meta name="color-scheme" content="light">
+<link rel="canonical" href="https://inergo.vercel.app/">
+
+<!-- Compartir enlace (WhatsApp, Instagram, X, iMessage…) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="INERGO">
+<meta property="og:locale" content="es_ES">
+<meta property="og:url" content="https://inergo.vercel.app/">
+<meta property="og:title" content="INERGO — Sal de tu zona de confort.">
+<meta property="og:description" content="INERGO propone un reto. Tú lo grabas. No hay marcha atrás.">
+<meta property="og:image" content="https://inergo.vercel.app/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="INERGO. Sal de tu zona de confort.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="INERGO — Sal de tu zona de confort.">
+<meta name="twitter:description" content="INERGO propone un reto. Tú lo grabas. No hay marcha atrás.">
+<meta name="twitter:image" content="https://inergo.vercel.app/og-image.png">
+
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 34'%3E%3Crect width='40' height='34' rx='7' fill='%23FF6347'/%3E%3Crect x='6' y='6' width='20' height='5.5' rx='2.5' fill='white' opacity='0.5'/%3E%3Crect x='6' y='15.5' width='20' height='5.5' rx='2.5' fill='white' opacity='0.8'/%3E%3Crect x='15' y='25' width='20' height='5.5' rx='2.5' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 
 <!-- PWA: permite instalar INERGO como app en móvil y escritorio -->
 <link rel="manifest" href="manifest.json">
@@ -15,501 +35,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="INERGO">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  :root{
-    /* Paleta permitida: Tangerine, Burnt Orange, Coral Orange, Soft Caramel + blanco/negro para contraste */
-    --bg:#FF6347;        /* Tangerine Orange — fondo principal */
-    --surface:#E25822;   /* Burnt Orange — superficies secundarias */
-    --accent:#FF7F50;    /* Coral Orange — acentos, hover */
-    --muted:#F5CBA7;     /* Soft Caramel — texto secundario, bordes suaves */
-    --ink:#0A0A0A;       /* Negro — contraste máximo, tarjetas, texto invertido */
-    --paper:#FFFFFF;     /* Blanco — texto principal, botones invertidos */
-    --line:rgba(245,203,167,0.38);
-    --line-soft:rgba(245,203,167,0.16);
-  }
-  *{ -webkit-tap-highlight-color: transparent; box-sizing:border-box; }
-  html,body{
-    background:var(--bg);
-    color:var(--paper);
-    overscroll-behavior:none;
-    height:100%;
-    overflow:hidden;
-  }
-  body{
-    font-family:'Inter',system-ui,sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  .font-display{ font-family:'Manrope',system-ui,sans-serif; }
-  /* Números y datos: en dispositivos Apple usa SF Pro real; en el resto,
-     Inter, que comparte la misma construcción geométrica y neutra. */
-  .font-num{
-    font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, sans-serif;
-    font-variant-numeric: tabular-nums;
-    letter-spacing:-0.02em;
-  }
-  .tight{ letter-spacing:-0.045em; }
-  .tight-sm{ letter-spacing:-0.02em; }
-  .app-shell{
-    max-width:560px;
-    margin:0 auto;
-    height:100vh;
-    height:100dvh;
-    display:flex;
-    flex-direction:column;
-    position:relative;
-    overflow:hidden;
-  }
-  .screen{
-    display:none;
-    flex-direction:column;
-    flex:1;
-    min-height:0;
-    padding: max(14px, env(safe-area-inset-top)) 20px max(16px, env(safe-area-inset-bottom));
-    animation: screen-in 320ms cubic-bezier(.19,1,.22,1);
-    overflow:hidden;
-  }
-  #topbar{ padding-top:max(20px, env(safe-area-inset-top)) !important; }
-  .screen.active{ display:flex; }
-  /* Progreso y Mis Retos contienen listas de longitud variable (historial, retos
-     personalizados, 84 retos predeterminados): son las únicas zonas con scroll
-     interno posible. Home y el flujo de juego nunca necesitan scroll. */
-  .screen[data-screen="progress"], .screen[data-screen="mychallenges"], .screen[data-screen="pending"]{ overflow:visible; }
-  @keyframes screen-in{
-    from{ opacity:0; transform:translateY(10px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
 
-  .btn-invert{
-    background:var(--paper);
-    color:var(--bg);
-    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
-  }
-  .btn-invert:active{ transform:scale(0.96); }
-  .btn-invert:disabled{ opacity:0.5; }
-
-  .btn-ghost{
-    border:1.5px solid var(--line);
-    color:var(--paper);
-    transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
-  }
-  .btn-ghost:active{ transform:scale(0.96); background:rgba(245,203,167,0.1); }
-
-  .chip{
-    border:1.5px solid var(--line);
-    color:var(--muted);
-    transition: all 150ms ease;
-    white-space:nowrap;
-  }
-  .chip.selected{
-    background:var(--paper);
-    color:var(--ink);
-    border-color:var(--paper);
-  }
-  .chip:active{ transform:scale(0.95); }
-
-  .card-dark{
-    background:var(--ink);
-    color:var(--paper);
-  }
-
-  /* PLAY button pulse to invite the tap */
-  .play-btn{ position:relative; }
-  .play-btn::after{
-    content:"";
-    position:absolute; inset:0;
-    border-radius:9999px;
-    border:1.5px solid rgba(255,255,255,0.55);
-    animation: pulse-ring 2.2s cubic-bezier(.4,0,.3,1) infinite;
-  }
-  @keyframes pulse-ring{
-    0%{ transform:scale(1); opacity:0.55; }
-    80%{ transform:scale(1.16); opacity:0; }
-    100%{ opacity:0; }
-  }
-  .play-btn.spinning::after{ display:none; }
-
-  /* ===== Tamaños fluidos: min(vw, vh) garantiza que TODO quepa en la
-     pantalla sin scroll, tanto si el límite es el ancho como el alto. ===== */
-  .hero-title{
-    font-size:min(14.5vw, 9.5vh, 74px);
-    line-height:0.87;
-    letter-spacing:-0.075em;
-  }
-  .play-circle{
-    width:min(54vw, 38vh, 240px);
-    height:min(54vw, 38vh, 240px);
-  }
-  #play-btn{ color:var(--bg); }
-  .spin-heading{ font-size:min(7vw, 4.6vh, 30px); line-height:1.08; }
-  .challenge-hero{
-    font-size:min(11vw, 7.2vh, 54px);
-    line-height:1.02;
-    letter-spacing:-0.055em;
-  }
-  /* Retos largos: la tipo baja un escalón para dejarle sitio al reloj */
-  .challenge-hero.len-md{
-    font-size:min(8.6vw, 5.6vh, 40px);
-    line-height:1.05;
-    letter-spacing:-0.045em;
-  }
-  .challenge-hero.len-lg{
-    font-size:min(7vw, 4.6vh, 32px);
-    line-height:1.08;
-    letter-spacing:-0.035em;
-  }
-
-  /* El topbar general se oculta durante el flujo de juego: el logo propio
-     de esa pantalla, más grande y a la izquierda, ocupa su lugar. */
-  .app-shell[data-active-screen="play"] #topbar{ display:none; }
-
-  /* Flash de cámara sincronizado con la revelación del reto */
-  #reveal-flash{
-    position:absolute;
-    inset:0;
-    background:var(--paper);
-    opacity:0;
-    pointer-events:none;
-    z-index:40;
-  }
-  #reveal-flash.flash-active{ animation: reveal-flash 480ms ease-out; }
-  @keyframes reveal-flash{
-    0%{ opacity:0.85; }
-    100%{ opacity:0; }
-  }
-
-  /* Sacudida breve de toda la pantalla de juego en el instante de la revelación */
-  #screen-play.shake-active{ animation: screen-shake 260ms ease-out; }
-  @keyframes screen-shake{
-    0%{ transform:translate(0,0); }
-    20%{ transform:translate(-5px,3px); }
-    40%{ transform:translate(5px,-2px); }
-    60%{ transform:translate(-4px,2px); }
-    80%{ transform:translate(3px,-1px); }
-    100%{ transform:translate(0,0); }
-  }
-
-  /* Onda expansiva desde el centro, sincronizada con el flash y la sacudida */
-  #reveal-shockwave{
-    position:absolute;
-    top:50%; left:50%;
-    width:44px; height:44px;
-    margin:-22px 0 0 -22px;
-    border-radius:50%;
-    border:3px solid rgba(255,255,255,0.85);
-    opacity:0;
-    pointer-events:none;
-    z-index:41;
-  }
-  #reveal-shockwave.shockwave-active{ animation: shockwave-expand 650ms cubic-bezier(.16,1,.3,1); }
-  @keyframes shockwave-expand{
-    0%{ transform:scale(0.4); opacity:0.85; border-width:4px; }
-    100%{ transform:scale(15); opacity:0; border-width:1px; }
-  }
-
-  /* Fondo que "respira" muy sutilmente mientras corre el cronómetro; se
-     acelera en los últimos 10 segundos para sumar tensión. */
-  @keyframes bg-breathe{
-    0%,100%{ background-color:var(--bg); }
-    50%{ background-color:#FF8064; }
-  }
-  body.breathing{ animation: bg-breathe 3.4s ease-in-out infinite; }
-  body.breathing-fast{ animation: bg-breathe 0.85s ease-in-out infinite; }
-
-  /* Estallido de líneas radiales al pulsar PLAY */
-  .play-burst{
-    position:absolute;
-    inset:0;
-    pointer-events:none;
-    z-index:5;
-  }
-  .play-burst-line{
-    position:absolute;
-    top:50%; left:50%;
-    width:3px; height:26px;
-    margin:-13px 0 0 -1.5px;
-    background:var(--paper);
-    border-radius:2px;
-    opacity:0;
-    transform-origin:center;
-  }
-  .play-burst.burst-active .play-burst-line{ animation: burst-line 480ms ease-out both; }
-  @keyframes burst-line{
-    0%{ opacity:0.9; transform:rotate(var(--angle)) translateY(-58px) scale(1); }
-    100%{ opacity:0; transform:rotate(var(--angle)) translateY(-130px) scale(0.4); }
-  }
-
-  /* Pequeño "pop" al seleccionar una categoría */
-  .chip.selected{ animation: chip-pop 220ms ease; }
-  @keyframes chip-pop{
-    0%{ transform:scale(0.92); }
-    55%{ transform:scale(1.05); }
-    100%{ transform:scale(1); }
-  }
-
-  /* Insignia de racha, visible en la home cuando hay algo que enseñar */
-  .streak-badge{
-    display:inline-flex;
-    align-items:center;
-    padding:2px 9px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.16);
-    font-family:'Inter', system-ui, sans-serif;
-    font-size:10.5px;
-    font-weight:700;
-    letter-spacing:0.02em;
-    text-transform:uppercase;
-    color:var(--paper);
-  }
-
-  /* Frase de intriga ("No hay marcha atrás.", etc.) + icono de ayuda con tooltip */
-  .tooltip-wrap{
-    position:relative;
-    display:inline-flex;
-  }
-  .info-dot{
-    width:17px;
-    height:17px;
-    border-radius:50%;
-    border:1.5px solid rgba(255,255,255,0.6);
-    color:var(--paper);
-    background:transparent;
-    font-family:'Manrope', system-ui, sans-serif;
-    font-weight:800;
-    font-size:10px;
-    line-height:1;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    cursor:help;
-    padding:0;
-  }
-  .info-dot:active{ transform:scale(0.9); }
-  .tooltip-panel{
-    position:fixed;
-    width:min(84vw, 300px);
-    background:var(--ink);
-    color:var(--paper);
-    border-radius:14px;
-    padding:14px 16px;
-    box-shadow:0 12px 28px rgba(0,0,0,0.35);
-    opacity:0;
-    transform:translateY(4px);
-    pointer-events:none;
-    transition: opacity 160ms ease, transform 160ms ease;
-    z-index:70;
-  }
-  .tooltip-panel.tooltip-visible{
-    opacity:1;
-    transform:translateY(0);
-    pointer-events:auto;
-  }
-  .tooltip-title{
-    font-family:'Manrope', system-ui, sans-serif;
-    font-weight:800;
-    font-size:13px;
-    letter-spacing:-0.01em;
-    margin-bottom:8px;
-  }
-  .tooltip-body{
-    font-size:12px;
-    line-height:1.5;
-    opacity:0.85;
-  }
-  .tooltip-body + .tooltip-body{ margin-top:8px; }
-
-  /* Modo grabación: espeja toda la app para que se lea bien al grabar con
-     una cámara frontal apuntando hacia la pantalla. */
-  .app-shell.mirror-mode{ transform:scaleX(-1); }
-
-  .sr-only{
-    position:absolute;
-    width:1px; height:1px;
-    padding:0; margin:-1px;
-    overflow:hidden;
-    clip:rect(0,0,0,0);
-    white-space:nowrap;
-    border:0;
-  }
-  .record-toggle{
-    display:inline-flex;
-    align-items:center;
-    gap:9px;
-    cursor:pointer;
-  }
-  .record-toggle-track{
-    position:relative;
-    width:42px;
-    height:25px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.28);
-    transition:background 200ms ease;
-    flex-shrink:0;
-  }
-  .record-toggle-thumb{
-    position:absolute;
-    top:2px; left:2px;
-    width:21px; height:21px;
-    border-radius:50%;
-    background:var(--paper);
-    box-shadow:0 1px 3px rgba(0,0,0,0.3);
-    transition:transform 200ms cubic-bezier(.4,0,.2,1);
-  }
-  .record-toggle input:checked ~ .record-toggle-track{ background:var(--ink); }
-  .record-toggle input:checked ~ .record-toggle-track .record-toggle-thumb{ transform:translateX(17px); }
-  .record-toggle-label{
-    font-family:'Inter', system-ui, sans-serif;
-    font-size:12.5px;
-    font-weight:600;
-    color:var(--paper);
-    opacity:0.9;
-  }
-
-  /* Pastilla de crédito ("por @perfil"), clicable, con los colores de la app */
-  .credit-pill{
-    display:inline-flex;
-    align-items:center;
-    gap:7px;
-    padding:5px 13px 5px 5px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.14);
-    border:1px solid var(--line);
-    color:var(--paper);
-    font-family:'Inter', system-ui, sans-serif;
-    font-size:12px;
-    font-weight:600;
-    transition: background 150ms ease, transform 120ms ease;
-  }
-  .credit-pill:hover{ background:rgba(255,255,255,0.22); }
-  .credit-pill:active{ transform:scale(0.96); }
-  .credit-icon{
-    width:20px;
-    height:20px;
-    border-radius:50%;
-    background:var(--paper);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-  }
-
-  /* Reloj regresivo: círculo blanco, arco en Tangerine que se vacía con el tiempo */
-  .timer-clock{
-    position:relative;
-    width:min(56vw, 38vh, 216px);
-    height:min(56vw, 38vh, 216px);
-  }
-  .timer-clock svg{ display:block; width:100%; height:100%; }
-  #timer-arc{ transition: stroke-dashoffset 1s linear; }
-  .timer-value-fluid{
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:min(13vw, 8vh, 50px);
-    color:var(--bg);
-    font-weight:300;
-    line-height:1;
-  }
-
-  /* Reel */
-  .reel-viewport{
-    height:min(26vh, 168px);
-    overflow:hidden;
-    position:relative;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
-    mask-image: linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%);
-  }
-  .reel-track{ will-change: transform; }
-  .reel-item{
-    height:min(26vh, 168px);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:0 12px;
-  }
-
-  /* Reveal */
-  .reveal-enter{ animation: reveal-in 560ms cubic-bezier(.2,1.4,.4,1) both; }
-  @keyframes reveal-in{
-    0%{ opacity:0; transform:translateY(22px) scale(0.82); }
-    55%{ opacity:1; transform:translateY(-4px) scale(1.035); }
-    100%{ opacity:1; transform:translateY(0) scale(1); }
-  }
-
-  .fade-up{ animation: fade-up 420ms cubic-bezier(.16,1,.3,1) both; }
-  @keyframes fade-up{
-    from{ opacity:0; transform:translateY(10px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
-
-  .timer-urgent{ animation: timer-pulse 1s ease-in-out infinite; }
-  @keyframes timer-pulse{
-    0%,100%{ transform:scale(1); }
-    50%{ transform:scale(1.045); }
-  }
-
-  .progress-bar-track{ background:rgba(245,203,167,0.22); }
-  .progress-bar-fill{ background:var(--paper); transition: width 1s linear; }
-
-  .scrollbar-none::-webkit-scrollbar{ display:none; }
-  .scrollbar-none{ -ms-overflow-style:none; scrollbar-width:none; }
-
-  input[type="range"]{
-    -webkit-appearance:none;
-    appearance:none;
-    height:4px;
-    background:rgba(245,203,167,0.35);
-    border-radius:99px;
-  }
-  input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance:none;
-    width:22px; height:22px;
-    border-radius:50%;
-    background:var(--paper);
-    cursor:pointer;
-    box-shadow:0 1px 4px rgba(0,0,0,0.35);
-  }
-  input[type="range"]::-moz-range-thumb{
-    width:22px; height:22px; border-radius:50%; background:var(--paper); border:none; cursor:pointer;
-  }
-
-  select, textarea, input[type="text"]{
-    background:rgba(10,10,10,0.15);
-    border:1.5px solid var(--line);
-    color:var(--paper);
-  }
-  select:focus, textarea:focus, input[type="text"]:focus{
-    outline:none;
-    border-color:var(--paper);
-  }
-  textarea::placeholder, input::placeholder{ color:rgba(245,203,167,0.6); }
-
-  ::selection{ background:var(--ink); color:var(--paper); }
-
-  .toast{
-    position:fixed;
-    left:50%;
-    bottom:28px;
-    transform:translateX(-50%) translateY(20px);
-    opacity:0;
-    pointer-events:none;
-    transition: all 260ms cubic-bezier(.16,1,.3,1);
-    z-index:60;
-  }
-  .toast.show{ transform:translateX(-50%) translateY(0); opacity:1; }
-
-  :focus-visible{ outline:2px solid var(--paper); outline-offset:2px; }
-
-  @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; }
-  }
-</style>
+<!-- Fuentes y estilos propios (sin dependencias externas: funciona sin conexión) -->
+<link rel="preload" href="fonts/manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="inergo.css?v=2.0.1">
+<script src="js/inergo-core.js?v=2.0.1" defer></script>
+<script src="js/inergo-app.js?v=2.0.1" defer></script>
 </head>
 <body>
 
@@ -519,9 +51,9 @@
   <div id="reveal-shockwave" aria-hidden="true"></div>
 
   <!-- ============ TOP BAR (persistent, minimal) ============ -->
-  <div id="topbar" class="flex flex-col shrink-0 px-5 pt-5 pb-1">
+  <header id="topbar" class="flex flex-col shrink-0 px-5 pt-5 pb-1">
     <div class="flex items-center justify-between">
-      <button data-nav="home" class="flex items-center gap-2.5 active:opacity-70 transition">
+      <button data-nav="home" aria-label="INERGO, ir al inicio" class="flex items-center gap-2.5 active:opacity-70 transition">
         <svg width="26" height="22" viewBox="0 0 40 34" aria-hidden="true">
           <rect x="0" y="2" width="26" height="6.5" rx="3" fill="white" opacity="0.5"/>
           <rect x="0" y="13.5" width="26" height="6.5" rx="3" fill="white" opacity="0.8"/>
@@ -529,27 +61,30 @@
         </svg>
         <span class="font-display font-black text-2xl tight-sm">INERGO</span>
       </button>
-      <div class="flex items-center gap-4">
-        <button data-nav="pending" aria-label="Retos pendientes" class="relative opacity-90 active:opacity-60 transition">
-          <svg width="20" height="21" viewBox="0 0 24 24" fill="none"><path d="M6 3H18V21L12 17L6 21V3Z" stroke="white" stroke-width="2.3" stroke-linejoin="round"/></svg>
-          <span id="pending-badge" class="hidden absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 rounded-full bg-white text-[10px] font-bold items-center justify-center" style="color:var(--bg);"></span>
+      <nav class="flex items-center gap-4" aria-label="Secciones">
+        <button data-nav="pending" id="pending-nav" aria-label="Retos pendientes" class="icon-btn opacity-90 active:opacity-60 transition">
+          <svg width="20" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3H18V21L12 17L6 21V3Z" stroke="white" stroke-width="2.3" stroke-linejoin="round"/></svg>
+          <span id="pending-badge" class="hidden absolute top-1 right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-white text-[10px] font-bold items-center justify-center" style="color:var(--bg);" aria-hidden="true"></span>
         </button>
-        <button data-nav="progress" aria-label="Tu progreso" class="opacity-90 active:opacity-60 transition">
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 20V13M12 20V4M20 20V9" stroke="white" stroke-width="2.3" stroke-linecap="round"/></svg>
+        <button data-nav="progress" aria-label="Tu progreso" class="icon-btn opacity-90 active:opacity-60 transition">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20V13M12 20V4M20 20V9" stroke="white" stroke-width="2.3" stroke-linecap="round"/></svg>
         </button>
-        <button data-nav="mychallenges" aria-label="Mis retos" class="opacity-90 active:opacity-60 transition">
-          <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M5 7H19M5 12H19M5 17H13" stroke="white" stroke-width="2.3" stroke-linecap="round"/></svg>
+        <button data-nav="mychallenges" aria-label="Mis retos" class="icon-btn opacity-90 active:opacity-60 transition">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7H19M5 12H19M5 17H13" stroke="white" stroke-width="2.3" stroke-linecap="round"/></svg>
         </button>
-      </div>
+        <button data-nav="settings" aria-label="Ajustes" class="icon-btn opacity-90 active:opacity-60 transition">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" stroke="white" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="white" stroke-width="2"/></svg>
+        </button>
+      </nav>
     </div>
     <label class="record-toggle self-start mt-3">
       <input type="checkbox" id="mirror-toggle" class="sr-only">
-      <span class="record-toggle-track"><span class="record-toggle-thumb"></span></span>
+      <span class="record-toggle-track" aria-hidden="true"><span class="record-toggle-thumb"></span></span>
       <span class="record-toggle-label">Modo grabación</span>
     </label>
-    <a href="https://www.instagram.com/alfonsog0nzalez/" target="_blank" rel="noopener" class="credit-pill self-start mt-2.5">
-      <span class="credit-icon">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <a href="https://www.instagram.com/alfonsog0nzalez/" target="_blank" rel="noopener noreferrer" class="credit-pill self-start mt-2.5">
+      <span class="credit-icon" aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
           <rect x="3" y="3" width="18" height="18" rx="5" stroke="#FF6347" stroke-width="2"/>
           <circle cx="12" cy="12" r="4" stroke="#FF6347" stroke-width="2"/>
           <circle cx="17.2" cy="6.8" r="1.2" fill="#FF6347"/>
@@ -557,22 +92,23 @@
       </span>
       <span>por @alfonsog0nzalez</span>
     </a>
-  </div>
+  </header>
 
   <!-- ============ HOME ============ -->
-  <section class="screen active" id="screen-home" data-screen="home">
+  <section class="screen active" id="screen-home" data-screen="home" aria-label="Inicio">
     <div class="flex-1 flex flex-col justify-center gap-9 min-h-0 py-1">
 
       <div class="shrink-0">
         <div class="flex items-center gap-2 mb-1.5">
           <p class="font-num text-[11px] tracking-widest uppercase opacity-70">app de reto real</p>
           <span id="home-streak" class="hidden streak-badge"></span>
+          <span id="test-badge" class="hidden streak-badge" style="background:var(--ink);">Modo pruebas</span>
         </div>
         <h1 class="hero-title font-display font-black max-w-[85%]">SAL DE TU<br>ZONA DE<br>CONFORT.</h1>
 
         <div class="mt-7">
-          <p class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80 mb-2.5">Selecciona tu reto</p>
-          <div id="category-selector" class="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-5 px-5"></div>
+          <p id="category-heading" class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80 mb-2.5">Selecciona tu reto</p>
+          <div id="category-selector" role="group" aria-labelledby="category-heading" class="flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-5 px-5"></div>
         </div>
       </div>
 
@@ -596,14 +132,14 @@
             <span class="play-burst-line" style="--angle:330deg"></span>
           </div>
         </div>
-        <p id="available-count" class="font-num text-[11px] opacity-70 uppercase tracking-wide"></p>
+        <p id="available-count" class="font-num text-[11px] opacity-70 uppercase tracking-wide" aria-live="polite"></p>
       </div>
 
     </div>
   </section>
 
   <!-- ============ SELECTION / REVEAL / ACTIVE / COMPLETED (one flow screen) ============ -->
-  <section class="screen" id="screen-play" data-screen="play">
+  <section class="screen" id="screen-play" data-screen="play" aria-label="Tu reto">
     <div class="flex items-center shrink-0 pt-4 pb-1.5">
       <button data-nav="home" aria-label="Volver al inicio" class="flex items-center gap-3 active:opacity-70 transition">
         <svg width="38" height="32" viewBox="0 0 40 34" aria-hidden="true">
@@ -616,9 +152,9 @@
     </div>
 
     <div class="shrink-0 pb-3">
-      <a href="https://www.instagram.com/alfonsog0nzalez/" target="_blank" rel="noopener" class="credit-pill">
-        <span class="credit-icon">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <a href="https://www.instagram.com/alfonsog0nzalez/" target="_blank" rel="noopener noreferrer" class="credit-pill">
+        <span class="credit-icon" aria-hidden="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
             <rect x="3" y="3" width="18" height="18" rx="5" stroke="#FF6347" stroke-width="2"/>
             <circle cx="12" cy="12" r="4" stroke="#FF6347" stroke-width="2"/>
             <circle cx="17.2" cy="6.8" r="1.2" fill="#FF6347"/>
@@ -631,8 +167,8 @@
     <div id="phrase-row" class="hidden items-center gap-1.5 pb-4 shrink-0">
       <p id="phrase-label" class="font-display font-bold text-sm tight-sm"></p>
       <span id="phrase-tooltip-wrap" class="tooltip-wrap hidden">
-        <button type="button" class="info-dot" aria-label="Qué significa quemar los barcos">?</button>
-        <div class="tooltip-panel" role="tooltip">
+        <button type="button" class="info-dot" aria-label="Qué significa quemar los barcos" aria-expanded="false" aria-controls="phrase-tooltip">?</button>
+        <div id="phrase-tooltip" class="tooltip-panel" role="tooltip">
           <p class="tooltip-title">¿Qué significa quemar los barcos?</p>
           <p class="tooltip-body">Significa tomar una decisión radical e irreversible, eliminando por completo cualquier posibilidad de dar marcha atrás o de escapar.</p>
           <p class="tooltip-body"><span class="font-semibold">Hernán Cortés (1519):</span> Se cuenta que al llegar a las costas de México, el conquistador extremeño ordenó destruir la flota para evitar que sus hombres, temerosos ante el panorama, desertaran y regresaran a Cuba. El mensaje a las tropas fue que la única forma de sobrevivir era conquistar.</p>
@@ -645,7 +181,7 @@
       <!-- SPINNING STATE -->
       <div id="spin-wrap" class="flex flex-col items-center gap-6">
         <p id="spin-heading-text" class="spin-heading font-display font-black tight-sm uppercase text-center">No hay marcha atrás.</p>
-        <div class="reel-viewport w-full">
+        <div class="reel-viewport w-full" aria-hidden="true">
           <div id="reel-track" class="reel-track"></div>
         </div>
       </div>
@@ -659,7 +195,7 @@
             <p class="font-num text-[11px] tracking-widest uppercase opacity-75">Te toca.</p>
           </div>
 
-          <p id="challenge-text" class="challenge-hero font-display font-black uppercase"></p>
+          <p id="challenge-text" class="challenge-hero font-display font-black uppercase" aria-hidden="true"></p>
 
           <div class="flex items-center justify-between font-num text-[11px] uppercase tracking-wide opacity-75 shrink-0">
             <span id="challenge-meta"></span>
@@ -668,7 +204,7 @@
         </div>
 
         <div id="timer-display" class="hidden shrink-0 flex flex-col items-center gap-3">
-          <div class="timer-clock">
+          <div class="timer-clock" role="timer" aria-live="off">
             <svg viewBox="0 0 200 200" width="100%" height="100%" aria-hidden="true">
               <circle cx="100" cy="100" r="90" fill="white"/>
               <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(226,88,34,0.16)" stroke-width="9"/>
@@ -682,19 +218,23 @@
         </div>
 
         <button id="action-btn" class="btn-invert self-center rounded-full px-7 py-3 font-display font-black text-sm tight-sm uppercase shrink-0"></button>
+        <!-- Solo en modo pruebas: permite abandonar el reto sin completarlo -->
+        <button id="skip-btn" class="hidden self-center font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 -mt-3 shrink-0">Saltar reto · modo pruebas</button>
 
       </div>
 
     </div>
+    <!-- Anuncio para lectores de pantalla (el texto del reto se escribe letra a letra) -->
+    <p id="sr-announcer" class="sr-only" aria-live="assertive" aria-atomic="true"></p>
   </section>
 
   <!-- ============ RETOS EN CURSO ============ -->
   <section class="screen" id="screen-pending" data-screen="pending">
     <div class="flex items-center gap-3 pt-1 pb-6 shrink-0">
-      <button data-nav="home" aria-label="Volver" class="opacity-90 active:opacity-60">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button data-nav="home" aria-label="Volver" class="icon-btn opacity-90 active:opacity-60">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <h2 class="font-display font-black text-2xl tight-sm uppercase">Retos pendientes</h2>
+      <h2 tabindex="-1" class="screen-heading font-display font-black text-2xl tight-sm uppercase outline-none">Retos pendientes</h2>
     </div>
 
     <div class="flex-1 overflow-y-auto scrollbar-none flex flex-col gap-3 pb-6">
@@ -706,10 +246,10 @@
   <!-- ============ PROGRESS ============ -->
   <section class="screen" id="screen-progress" data-screen="progress">
     <div class="flex items-center gap-3 pt-1 pb-6 shrink-0">
-      <button data-nav="home" aria-label="Volver" class="opacity-90 active:opacity-60">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button data-nav="home" aria-label="Volver" class="icon-btn opacity-90 active:opacity-60">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <h2 class="font-display font-black text-2xl tight-sm uppercase">Tu progreso</h2>
+      <h2 tabindex="-1" class="screen-heading font-display font-black text-2xl tight-sm uppercase outline-none">Tu progreso</h2>
     </div>
 
     <div class="flex-1 overflow-y-auto scrollbar-none flex flex-col gap-8 pb-6">
@@ -745,26 +285,26 @@
   <!-- ============ MIS RETOS ============ -->
   <section class="screen" id="screen-mychallenges" data-screen="mychallenges">
     <div class="flex items-center gap-3 pt-1 pb-5 shrink-0">
-      <button data-nav="home" aria-label="Volver" class="opacity-90 active:opacity-60">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button data-nav="home" aria-label="Volver" class="icon-btn opacity-90 active:opacity-60">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <h2 class="font-display font-black text-2xl tight-sm uppercase">Mis retos</h2>
+      <h2 tabindex="-1" class="screen-heading font-display font-black text-2xl tight-sm uppercase outline-none">Mis retos</h2>
     </div>
 
     <div class="flex-1 overflow-y-auto scrollbar-none flex flex-col gap-8 pb-8">
 
       <!-- Add / edit form -->
       <div class="card-dark rounded-3xl p-5 flex flex-col gap-4">
-        <p id="form-title" class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Describe tu reto</p>
+        <label for="input-text" id="form-title" class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Describe tu reto</label>
         <textarea id="input-text" rows="3" class="w-full rounded-xl px-4 py-3 font-medium text-base resize-none" placeholder="Ej: Pregunta a un desconocido..." maxlength="180"></textarea>
 
         <div class="flex flex-col gap-2">
-          <label class="font-num text-[11px] uppercase tracking-wide opacity-60">Categoría</label>
+          <label for="input-category" class="font-num text-[11px] uppercase tracking-wide opacity-60">Categoría</label>
           <select id="input-category" class="w-full rounded-xl px-4 py-3 font-semibold text-sm"></select>
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="font-num text-[11px] uppercase tracking-wide opacity-60">Tiempo</label>
+          <label for="input-duration" class="font-num text-[11px] uppercase tracking-wide opacity-60">Tiempo</label>
           <select id="input-duration" class="w-full rounded-xl px-4 py-3 font-semibold text-sm">
             <option value="120">2 min</option>
             <option value="300" selected>5 min</option>
@@ -792,7 +332,7 @@
       <div>
         <div class="flex items-center justify-between mb-3">
           <p class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Retos predeterminados</p>
-          <button id="restore-defaults-btn" class="font-num text-[11px] uppercase tracking-wide underline opacity-70 active:opacity-40">Restaurar todos</button>
+          <button id="restore-defaults-btn" class="font-num text-[11px] uppercase tracking-wide underline opacity-70 active:opacity-40 py-2 -my-2">Restaurar todos</button>
         </div>
         <p class="font-medium text-xs opacity-60 mb-3">Desactiva los que no quieras que te toquen. No se eliminan, solo se apartan del sorteo.</p>
         <div id="default-list" class="flex flex-col gap-2 max-h-72 overflow-y-auto scrollbar-none pr-1"></div>
@@ -801,1277 +341,166 @@
     </div>
   </section>
 
+  <!-- ============ AJUSTES ============ -->
+  <section class="screen" id="screen-settings" data-screen="settings">
+    <div class="flex items-center gap-3 pt-1 pb-5 shrink-0">
+      <button data-nav="home" aria-label="Volver" class="icon-btn opacity-90 active:opacity-60">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h2 tabindex="-1" class="screen-heading font-display font-black text-2xl tight-sm uppercase outline-none">Ajustes</h2>
+    </div>
+
+    <div class="flex-1 overflow-y-auto scrollbar-none flex flex-col gap-8 pb-8">
+
+      <div>
+        <p class="set-section-title">Experiencia</p>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label" id="lbl-sound">Sonido</p>
+            <p class="set-row-hint">Tick del sorteo, revelación y cuenta atrás.</p>
+          </div>
+          <label class="record-toggle">
+            <input type="checkbox" id="sound-toggle" class="sr-only" aria-labelledby="lbl-sound">
+            <span class="record-toggle-track" aria-hidden="true"><span class="record-toggle-thumb"></span></span>
+          </label>
+        </div>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label" id="lbl-haptics">Vibración</p>
+            <p class="set-row-hint" id="haptics-hint">Pequeños golpes al revelar y completar.</p>
+          </div>
+          <label class="record-toggle">
+            <input type="checkbox" id="haptics-toggle" class="sr-only" aria-labelledby="lbl-haptics" aria-describedby="haptics-hint">
+            <span class="record-toggle-track" aria-hidden="true"><span class="record-toggle-thumb"></span></span>
+          </label>
+        </div>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label">Modo grabación</p>
+            <p class="set-row-hint">Espeja la app entera para que se lea bien al grabar con una cámara frontal apuntando a la pantalla. Se activa desde el interruptor de la parte superior.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <p class="set-section-title">App</p>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label">Instalar INERGO</p>
+            <p class="set-row-hint" id="install-hint"></p>
+          </div>
+          <button id="install-btn" class="hidden btn-invert rounded-full px-5 py-2.5 font-display font-black text-xs tight-sm uppercase shrink-0"></button>
+        </div>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label">Introducción</p>
+            <p class="set-row-hint">Cómo funciona INERGO en tres pasos.</p>
+          </div>
+          <button id="replay-onboarding-btn" class="btn-ghost rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Ver</button>
+        </div>
+      </div>
+
+      <div>
+        <div id="testmode-row" class="set-row hidden">
+          <div>
+            <p class="set-row-label" id="lbl-testmode">Modo pruebas</p>
+            <p class="set-row-hint">Permite saltar un reto ya revelado. Solo para testear: desactívalo antes de grabar.</p>
+          </div>
+          <label class="record-toggle">
+            <input type="checkbox" id="testmode-toggle" class="sr-only" aria-labelledby="lbl-testmode">
+            <span class="record-toggle-track" aria-hidden="true"><span class="record-toggle-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <p class="set-section-title">Tus datos</p>
+        <p class="set-row-hint mb-2">Tu progreso vive solo en este dispositivo. INERGO no tiene cuentas ni envía tus datos a ningún servidor.</p>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label">Exportar copia</p>
+            <p class="set-row-hint">Descarga tu XP, racha, historial y retos en un archivo.</p>
+          </div>
+          <button id="export-btn" class="btn-ghost rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Exportar</button>
+        </div>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label">Importar copia</p>
+            <p class="set-row-hint">Recupera una copia exportada. Útil para pasar tu progreso de Safari a la app instalada.</p>
+          </div>
+          <button id="import-btn" class="btn-ghost rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Importar</button>
+          <input type="file" id="import-input" accept="application/json,.json" class="sr-only" tabindex="-1" aria-hidden="true">
+        </div>
+        <div class="set-row">
+          <div>
+            <p class="set-row-label">Borrar todo</p>
+            <p class="set-row-hint">Elimina tu progreso de este dispositivo. No se puede deshacer.</p>
+          </div>
+          <button id="reset-btn" class="btn-danger rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Borrar</button>
+        </div>
+      </div>
+
+      <p id="version-label" class="font-num text-[11px] uppercase tracking-wide opacity-60 select-none"></p>
+    </div>
+  </section>
+
+  <!-- ============ INTRODUCCIÓN (primera vez) ============ -->
+  <div id="onboarding" class="onboarding" role="dialog" aria-modal="true" aria-labelledby="ob-title-1">
+    <div class="flex items-center justify-between shrink-0 pt-4">
+      <span class="flex items-center gap-2.5">
+        <svg width="26" height="22" viewBox="0 0 40 34" aria-hidden="true">
+          <rect x="0" y="2" width="26" height="6.5" rx="3" fill="white" opacity="0.5"/>
+          <rect x="0" y="13.5" width="26" height="6.5" rx="3" fill="white" opacity="0.8"/>
+          <rect x="12" y="25" width="26" height="6.5" rx="3" fill="white"/>
+        </svg>
+        <span class="font-display font-black text-2xl tight-sm">INERGO</span>
+      </span>
+      <button id="ob-skip" class="font-num text-[11px] uppercase tracking-wide underline opacity-80 py-3 -my-3 px-2 -mx-2">Saltar</button>
+    </div>
+
+    <div class="flex-1 flex flex-col justify-center min-h-0">
+      <div class="ob-step active flex-col gap-5" data-step="0">
+        <p class="font-num text-[11px] tracking-widest uppercase opacity-75">01 / 03</p>
+        <h2 id="ob-title-1" class="ob-title font-display font-black uppercase">Elige.<br>Pulsa<br>PLAY.</h2>
+        <p class="font-medium text-base leading-snug opacity-90 max-w-[30ch]">Escoge una categoría o deja TODOS. INERGO sortea un reto por ti.</p>
+      </div>
+      <div class="ob-step flex-col gap-5" data-step="1">
+        <p class="font-num text-[11px] tracking-widest uppercase opacity-75">02 / 03</p>
+        <h2 class="ob-title font-display font-black uppercase">Lo que<br>salga,<br>te toca.</h2>
+        <p class="font-medium text-base leading-snug opacity-90 max-w-[30ch]">Una vez revelado, no se puede cambiar ni saltar. Quemamos los barcos: no hay marcha atrás.</p>
+      </div>
+      <div class="ob-step flex-col gap-5" data-step="2">
+        <p class="font-num text-[11px] tracking-widest uppercase opacity-75">03 / 03</p>
+        <h2 class="ob-title font-display font-black uppercase">Hazlo.<br>Grábalo.</h2>
+        <p class="font-medium text-base leading-snug opacity-90 max-w-[30ch]">Graba la pantalla y a ti haciéndolo. Si grabas con la cámara frontal apuntando al móvil, activa el Modo grabación: la app se espeja para que se lea bien.</p>
+      </div>
+    </div>
+
+    <div class="shrink-0 flex flex-col gap-5">
+      <div class="flex items-center gap-2" aria-hidden="true">
+        <span class="ob-dot active"></span><span class="ob-dot"></span><span class="ob-dot"></span>
+      </div>
+      <button id="ob-next" class="btn-invert w-full rounded-2xl py-4 font-display font-black text-lg tight-sm uppercase">Siguiente</button>
+    </div>
+  </div>
+
+  <!-- ============ HOJA INFERIOR (instalar en iPhone, confirmaciones) ============ -->
+  <div id="sheet" class="sheet" aria-hidden="true">
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+      <p id="sheet-title" class="font-display font-black text-2xl tight-sm uppercase mb-4"></p>
+      <div id="sheet-body" class="text-sm leading-relaxed opacity-90"></div>
+      <div id="sheet-actions" class="flex flex-col gap-3 mt-6"></div>
+    </div>
+  </div>
+
 </div>
 
-<div id="toast" class="toast card-dark rounded-full px-5 py-3 font-display font-bold text-sm tight-sm uppercase"></div>
+<div id="toast" class="toast card-dark rounded-full px-5 py-3 font-display font-bold text-sm tight-sm uppercase" role="status" aria-live="polite"></div>
 
-<script>
-(function(){
-  "use strict";
+<div id="update-banner" class="update-banner" role="status" aria-live="polite">
+  <span class="font-display font-bold text-xs uppercase tracking-wide">Nueva versión lista</span>
+  <button id="update-btn" class="btn-invert rounded-full px-4 py-2 font-display font-black text-xs tight-sm uppercase">Actualizar</button>
+</div>
 
-  /* =========================================================
-     1. DATOS — RETOS PREDEFINIDOS
-  ========================================================= */
-  const CATEGORIES = [
-    { id:"todos", label:"TODOS" },
-    { id:"espontanea", label:"ESPONTÁNEA" },
-    { id:"experiencia", label:"EXPERIENCIA" },
-    { id:"reflexion", label:"REFLEXIÓN" },
-    { id:"conocimiento", label:"CONOCIMIENTO" }
-  ];
-
-  // Sin puntuación de dificultad visible: cada reto lleva unos XP fijos
-  // según su categoría (espontánea 20, experiencia 50, reflexión 15).
-  function mk(id, text, category, duration, points){
-    return { id, text, category, durationType:"timer", duration, points };
-  }
-  // Reto "pendiente": sin cronómetro ni fecha límite calculada por la app —
-  // el "cuándo" va escrito dentro del propio texto del reto. Se guarda en
-  // "Retos pendientes" hasta que lo marques como hecho.
-  function mkP(id, text, category, points){
-    return { id, text, category, durationType:"pending", points };
-  }
-  // Reto de "Conocimiento": dos fases fijas — investigar 10 min, hablar 1 min.
-  function mkK(id, text){
-    return { id, text, category:"conocimiento", durationType:"research", researchDuration:600, talkDuration:60, points:20 };
-  }
-
-  const DEFAULT_CHALLENGES = [
-    // ESPONTÁNEA — se hace ahora mismo, unos 30 min como mucho.
-    mk("espontanea-001","Sal a la calle ahora mismo y hazle un cumplido sincero y específico a 3 desconocidos, grabando su reacción.","espontanea",900,20),
-    mk("espontanea-002","Entra en una tienda y pide un descuento sin ningún motivo real, solo porque sí.","espontanea",300,20),
-    mk("espontanea-003","Pide un abrazo a un desconocido por la calle, tras hablar con él.","espontanea",420,20),
-    mk("espontanea-004","Llama ahora mismo a alguien con quien no hablas hace tiempo y dile en voz alta por qué te importó.","espontanea",600,20),
-    mk("espontanea-005","Mirando fijamente a cámara, confiesa algo que te avergüenza y que nunca has contado a nadie.","espontanea",300,20),
-    mk("espontanea-006","Pregunta a un desconocido cuál es su mayor arrepentimiento en la vida.","espontanea",480,20),
-    mk("espontanea-007","Entra en una tienda de ropa que nunca pisarías, pruébate algo y pide la opinión sincera a un desconocido dentro del probador.","espontanea",900,20),
-    mk("espontanea-008","Pide en un bar o restaurante que te recomienden algo \"para impresionar a alguien\" y cuéntales por qué lo necesitas.","espontanea",600,20),
-    mk("espontanea-009","Pide a un desconocido que te haga una crítica honesta de tu outfit de hoy.","espontanea",300,20),
-    mk("espontanea-010","Ve a la sección de perfumería o cosmética de una tienda y pide a un dependiente que te maquille o te ponga colonia mientras la gente mira.","espontanea",900,20),
-    mk("espontanea-011","Pide a alguien random que pasa por la calle que te dé un consejo de vida en 30 segundos.","espontanea",300,20),
-    mk("espontanea-012","Pide a un grupo de desconocidos que se echen una foto contigo sin dar ninguna razón.","espontanea",480,20),
-    mk("espontanea-013","Aprende qué es un suceso, un concepto científico o algo muy nicho de una disciplina que no domines, y explícalo sin muletillas durante 1 minuto. Tienes 20 minutos para investigarlo y grabarte explicándolo.","espontanea",1200,20),
-
-    // EXPERIENCIA — sin cronómetro ni fecha límite: el "cuándo" va escrito en
-    // el propio texto del reto ("mañana temprano", "el próximo fin de semana"...).
-    // Se apunta en "Retos pendientes" hasta que lo marques como hecho.
-    mkP("experiencia-001","Ve a un pueblo o barrio a menos de 15 minutos de donde vives, cena allí completamente solo y date una vuelta.","experiencia",50),
-    mkP("experiencia-002","Ve solo al cine a la sesión con el horario más raro que encuentres y cuenta cómo te sentiste al salir.","experiencia",50),
-    mkP("experiencia-003","Haz autostop real o pide ayuda a un desconocido para resolver algo que necesitas hoy.","experiencia",50),
-    mkP("experiencia-004","Preséntate en persona (sin cita previa) en un sitio donde te gustaría trabajar o colaborar, y pide hablar con alguien.","experiencia",50),
-    mkP("experiencia-005","Sal de tu ciudad un día entero sin planear nada: elige destino la misma mañana.","experiencia",50),
-    mkP("experiencia-006","Cuenta tu mayor miedo en voz alta a un grupo de amigos reunidos, sin quitarle importancia después.","experiencia",50),
-    mkP("experiencia-007","Ve solo a un evento social donde no conozcas a nadie y no te vayas hasta haber hablado con 3 personas nuevas.","experiencia",50),
-    mkP("experiencia-008","Pide trabajo temporal de un día (ayudar en un negocio, repartir, lo que sea) tocando puertas sin experiencia previa en ello.","experiencia",50),
-    mkP("experiencia-009","Pasa 24 horas comiendo únicamente lo que te recomiende gente random que pares por la calle.","experiencia",50),
-    mkP("experiencia-010","Levántate mañana antes del amanecer, ve a verlo y grábalo.","experiencia",50),
-
-    // REFLEXIÓN — "Reflexiona sobre X." Cronómetro fijo de 1 minuto hablando en voz alta del tema.
-    mk("reflexion-001","Reflexiona en voz alta sobre: el miedo al fracaso.","reflexion",60,15),
-    mk("reflexion-002","Reflexiona en voz alta sobre: el miedo a lo que piensan los demás de ti.","reflexion",60,15),
-    mk("reflexion-003","Reflexiona en voz alta sobre: la última vez que mentiste, y por qué.","reflexion",60,15),
-    mk("reflexion-004","Reflexiona en voz alta sobre: algo que te arrepientes de no haber dicho.","reflexion",60,15),
-    mk("reflexion-005","Reflexiona en voz alta sobre: tu mayor inseguridad física.","reflexion",60,15),
-    mk("reflexion-006","Reflexiona en voz alta sobre: la persona a la que más admiras, y por qué.","reflexion",60,15),
-    mk("reflexion-007","Reflexiona en voz alta sobre: el día que más miedo has pasado en tu vida.","reflexion",60,15),
-    mk("reflexion-008","Reflexiona en voz alta sobre: algo que finges que no te importa, pero sí te importa.","reflexion",60,15),
-    mk("reflexion-009","Reflexiona en voz alta sobre: lo que harías si supieras que no vas a fracasar.","reflexion",60,15),
-    mk("reflexion-010","Reflexiona en voz alta sobre: la relación que más te ha marcado, para bien o para mal.","reflexion",60,15),
-    mk("reflexion-011","Reflexiona en voz alta sobre: qué es el éxito para ti, de verdad.","reflexion",60,15),
-    mk("reflexion-012","Reflexiona en voz alta sobre: algo que le dirías a tu yo de hace 5 años.","reflexion",60,15),
-    mk("reflexion-013","Reflexiona en voz alta sobre: el motivo real por el que procrastinas.","reflexion",60,15),
-    mk("reflexion-014","Reflexiona en voz alta sobre: qué harías si solo te quedara un año de vida.","reflexion",60,15),
-    mk("reflexion-015","Reflexiona en voz alta sobre: cómo te afecta compararte con otros.","reflexion",60,15),
-    mk("reflexion-016","Reflexiona en voz alta sobre: un error que cambió tu forma de ver la vida.","reflexion",60,15),
-    mk("reflexion-017","Reflexiona en voz alta sobre: qué es lo que más evitas sentir.","reflexion",60,15),
-    mk("reflexion-018","Reflexiona en voz alta sobre: tu relación con el dinero.","reflexion",60,15),
-    mk("reflexion-019","Reflexiona en voz alta sobre: lo que de verdad piensas de la muerte.","reflexion",60,15),
-    mk("reflexion-020","Reflexiona en voz alta sobre: algo que llevas mucho tiempo posponiendo, y por qué.","reflexion",60,15),
-
-    // CONOCIMIENTO — términos y hechos muy poco conocidos, casi nadie sabrá de
-    // qué van de entrada. Mecánica de dos fases: INVESTIGAR (10 min) → HABLAR (1 min).
-
-    // Medicina
-    mkK("conocimiento-001","Investiga qué es la xantopsia y prepárate para explicarlo."),
-    mkK("conocimiento-002","Investiga qué es la cataplejía y prepárate para explicarlo."),
-    mkK("conocimiento-003","Investiga qué es la anosognosia y prepárate para explicarlo."),
-    mkK("conocimiento-004","Investiga qué es la acalasia y prepárate para explicarlo."),
-    mkK("conocimiento-005","Investiga qué es la miosis y prepárate para explicarlo."),
-    mkK("conocimiento-006","Investiga qué es la aloimunización y prepárate para explicarlo."),
-    mkK("conocimiento-007","Investiga qué es la xerostomía y prepárate para explicarlo."),
-    mkK("conocimiento-008","Investiga qué es la disautonomía y prepárate para explicarlo."),
-    mkK("conocimiento-009","Investiga qué es la paramnesia reduplicativa y prepárate para explicarlo."),
-    mkK("conocimiento-010","Investiga qué es la coprolalia y prepárate para explicarlo."),
-
-    // Ciencia
-    mkK("conocimiento-011","Investiga qué es el efecto Mpemba y prepárate para explicarlo."),
-    mkK("conocimiento-012","Investiga qué es la superfluidez y prepárate para explicarlo."),
-    mkK("conocimiento-013","Investiga qué es la radiación de Cherenkov y prepárate para explicarlo."),
-    mkK("conocimiento-014","Investiga qué es el punto triple de una sustancia y prepárate para explicarlo."),
-    mkK("conocimiento-015","Investiga qué es el efecto Casimir y prepárate para explicarlo."),
-    mkK("conocimiento-016","Investiga qué es el efecto Leidenfrost y prepárate para explicarlo."),
-    mkK("conocimiento-017","Investiga qué es el diamagnetismo y prepárate para explicarlo."),
-    mkK("conocimiento-018","Investiga qué es el efecto Coriolis y prepárate para explicarlo."),
-    mkK("conocimiento-019","Investiga qué es la superconductividad y prepárate para explicarlo."),
-    mkK("conocimiento-020","Investiga qué es el efecto túnel cuántico y prepárate para explicarlo."),
-
-    // Naturaleza
-    mkK("conocimiento-021","Investiga qué es la partenogénesis y prepárate para explicarlo."),
-    mkK("conocimiento-022","Investiga qué es la mixotrofia y prepárate para explicarlo."),
-    mkK("conocimiento-023","Investiga qué es la diapausa y prepárate para explicarlo."),
-    mkK("conocimiento-024","Investiga qué es la endosimbiosis y prepárate para explicarlo."),
-    mkK("conocimiento-025","Investiga qué es la alelopatía y prepárate para explicarlo."),
-    mkK("conocimiento-026","Investiga qué es la apoptosis y prepárate para explicarlo."),
-    mkK("conocimiento-027","Investiga qué es la quimiotaxis y prepárate para explicarlo."),
-    mkK("conocimiento-028","Investiga qué es la micorriza y prepárate para explicarlo."),
-    mkK("conocimiento-029","Investiga qué es la criptobiosis y prepárate para explicarlo."),
-    mkK("conocimiento-030","Investiga qué es el epifitismo y prepárate para explicarlo."),
-
-    // Geología
-    mkK("conocimiento-031","Investiga qué es un piroclasto y prepárate para explicarlo."),
-    mkK("conocimiento-032","Investiga qué es el relieve kárstico y prepárate para explicarlo."),
-    mkK("conocimiento-033","Investiga qué es una diaclasa y prepárate para explicarlo."),
-    mkK("conocimiento-034","Investiga qué es la isostasia y prepárate para explicarlo."),
-    mkK("conocimiento-035","Investiga qué es la tefra y prepárate para explicarlo."),
-    mkK("conocimiento-036","Investiga qué es un xenolito y prepárate para explicarlo."),
-    mkK("conocimiento-037","Investiga qué es la estratigrafía y prepárate para explicarlo."),
-    mkK("conocimiento-038","Investiga qué es la subducción de placas y prepárate para explicarlo."),
-    mkK("conocimiento-039","Investiga qué es un lacolito y prepárate para explicarlo."),
-    mkK("conocimiento-040","Investiga qué son las varvas y prepárate para explicarlo."),
-
-    // Psicología
-    mkK("conocimiento-041","Investiga qué es la apofenia y prepárate para explicarlo."),
-    mkK("conocimiento-042","Investiga qué es el efecto Zeigarnik y prepárate para explicarlo."),
-    mkK("conocimiento-043","Investiga qué es la criptomnesia y prepárate para explicarlo."),
-    mkK("conocimiento-044","Investiga qué es el efecto Barnum y prepárate para explicarlo."),
-    mkK("conocimiento-045","Investiga qué es el condicionamiento clásico de Pavlov y prepárate para explicarlo."),
-    mkK("conocimiento-046","Investiga qué es el efecto halo y prepárate para explicarlo."),
-    mkK("conocimiento-047","Investiga qué es la disonancia cognitiva y prepárate para explicarlo."),
-    mkK("conocimiento-048","Investiga qué es el efecto Pigmalión y prepárate para explicarlo."),
-    mkK("conocimiento-049","Investiga qué es el sesgo de anclaje y prepárate para explicarlo."),
-    mkK("conocimiento-050","Investiga qué es el efecto espectador y prepárate para explicarlo."),
-
-    // Historia
-    mkK("conocimiento-051","Investiga en qué consistió el Cisma de Occidente y prepárate para explicarlo."),
-    mkK("conocimiento-052","Investiga en qué consistió la Guerra de la Oreja de Jenkins y prepárate para explicarlo."),
-    mkK("conocimiento-053","Investiga en qué consistió la Peste de Justiniano y prepárate para explicarlo."),
-    mkK("conocimiento-054","Investiga en qué consistió el Incidente de Mukden y prepárate para explicarlo."),
-    mkK("conocimiento-055","Investiga en qué consistió la Rebelión de los Bóxers y prepárate para explicarlo."),
-    mkK("conocimiento-056","Investiga en qué consistió el Tratado de Tordesillas y prepárate para explicarlo."),
-    mkK("conocimiento-057","Investiga en qué consistió la Matanza de Katyn y prepárate para explicarlo."),
-    mkK("conocimiento-058","Investiga en qué consistió la Defenestración de Praga y prepárate para explicarlo."),
-    mkK("conocimiento-059","Investiga en qué consistió el Cisma de 1054 entre las Iglesias católica y ortodoxa y prepárate para explicarlo."),
-    mkK("conocimiento-060","Investiga en qué consistió la Guerra de las Comunidades de Castilla y prepárate para explicarlo.")
-  ];
-
-  const MICROCOPY = ["NO HAY VUELTA ATRÁS.","PIÉNSALO MENOS.","AHORA HAZLO.","NO HAY EXCUSAS.","DEJA DE PENSAR.","YA LO HAS VISTO.","EMPIEZA."];
-
-  // Frase que acompaña siempre la selección y la revelación del reto.
-  const SPIN_PHRASE = "Quemando los barcos.";
-
-  const STORAGE_KEY = "inergo_data_v1";
-
-  /* =========================================================
-     2. LOCALSTORAGE
-  ========================================================= */
-  function defaultData(){
-    return {
-      customChallenges: [],
-      disabledDefaultIds: [],
-      completedLog: [],      // {id, text, category, completedAt, xp}
-      recentIds: [],         // last N ids shown/completed, avoid immediate repeats
-      pendingChallenges: [], // retos de Experiencia apuntados, sin plazo: {activeId, challengeId, text, category, points, savedAt}
-      mirrorMode: false,
-      xp: 0,
-      streak: 0,
-      lastCompletedDate: null,
-      stats: { espontanea:0, experiencia:0, reflexion:0, conocimiento:0 },
-      selectedCategory: "todos"
-    };
-  }
-
-  let data = loadData();
-
-  function loadData(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return defaultData();
-      const parsed = JSON.parse(raw);
-      const merged = Object.assign(defaultData(), parsed);
-      // Si la categoría guardada de una sesión anterior ya no existe (por
-      // ejemplo, tras cambiar el catálogo de categorías), vuelve a "TODOS"
-      // en vez de dejar la app filtrando silenciosamente sobre una categoría fantasma.
-      if(!CATEGORIES.some(c => c.id === merged.selectedCategory)){
-        merged.selectedCategory = "todos";
-      }
-      return merged;
-    }catch(e){
-      console.warn("No se pudo leer localStorage, usando datos por defecto.", e);
-      return defaultData();
-    }
-  }
-
-  function saveData(){
-    try{
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    }catch(e){
-      console.warn("No se pudo guardar en localStorage.", e);
-    }
-  }
-
-  function resetData(){
-    data = defaultData();
-    saveData();
-  }
-
-  /* =========================================================
-     3. ESTADO DE LA APP
-  ========================================================= */
-  const state = {
-    screen: "home",
-    playSubState: "idle",   // idle | spinning | revealed | active | completed
-    currentChallenge: null,
-    timerTotal: 0,
-    timerRemaining: 0,
-    timerHandle: null,
-    timerPhase: null,       // null | "research" | "talk" — solo se usa en "Conocimiento"
-    typewriterHandle: null,
-    editingChallengeId: null
-  };
-
-  /* =========================================================
-     4. UTILIDADES
-  ========================================================= */
-  function $(sel){ return document.querySelector(sel); }
-  function $all(sel){ return Array.from(document.querySelectorAll(sel)); }
-
-  function allActiveChallenges(){
-    const customs = data.customChallenges;
-    const defaults = DEFAULT_CHALLENGES.filter(c => !data.disabledDefaultIds.includes(c.id));
-    return defaults.concat(customs);
-  }
-
-  function categoryLabel(id){
-    const c = CATEGORIES.find(c => c.id === id);
-    return c ? c.label : id.toUpperCase();
-  }
-
-  function formatDuration(challenge){
-    if(challenge.durationType === "research"){
-      return Math.round(challenge.researchDuration/60) + " MIN + " + Math.round(challenge.talkDuration/60) + " MIN";
-    }
-    const min = Math.round(challenge.duration / 60);
-    return min + " MIN";
-  }
-
-  function formatTimer(seconds){
-    const m = Math.floor(seconds / 60).toString().padStart(2,"0");
-    const s = Math.floor(seconds % 60).toString().padStart(2,"0");
-    return m + ":" + s;
-  }
-
-  function showToast(msg){
-    const t = $("#toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(showToast._h);
-    showToast._h = setTimeout(()=> t.classList.remove("show"), 2200);
-  }
-
-  /* =========================================================
-     5. SONIDO (Web Audio API, sin archivos externos)
-  ========================================================= */
-  let audioCtx = null;
-  function getAudioCtx(){
-    if(!audioCtx){
-      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-      catch(e){ audioCtx = null; }
-    }
-    // iOS (sobre todo instalada como app desde pantalla de inicio) arranca el
-    // AudioContext "suspendido" hasta que se reanuda explícitamente dentro de
-    // un gesto real del usuario.
-    if(audioCtx && audioCtx.state === "suspended"){
-      audioCtx.resume().catch(() => {});
-    }
-    return audioCtx;
-  }
-
-  // Desbloqueo temprano: en el primer toque/click de toda la app, se crea y
-  // reanuda el AudioContext, aunque ese primer toque no vaya a sonar nada.
-  // Sin esto, iOS puede seguir bloqueando el audio incluso llamando a
-  // getAudioCtx() más tarde desde otros manejadores de click.
-  function unlockAudioOnce(){
-    getAudioCtx();
-    document.removeEventListener("touchend", unlockAudioOnce);
-    document.removeEventListener("click", unlockAudioOnce);
-  }
-  document.addEventListener("touchend", unlockAudioOnce, { once:true });
-  document.addEventListener("click", unlockAudioOnce, { once:true });
-
-  function beep({freq=440, duration=0.05, type="sine", gain=0.06, delay=0}){
-    const ctx = getAudioCtx();
-    if(!ctx) return;
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    g.gain.value = gain;
-    osc.connect(g); g.connect(ctx.destination);
-    const t0 = ctx.currentTime + delay;
-    g.gain.setValueAtTime(gain, t0);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
-    osc.start(t0);
-    osc.stop(t0 + duration + 0.02);
-  }
-  function soundClickPlay(){ beep({freq:220, duration:0.09, type:"square", gain:0.05}); }
-
-  // El tick del carrete sube de tono según se acerca la revelación (0 = inicio, 1 = final)
-  function soundTick(progress){
-    const freq = 620 + Math.min(1, Math.max(0, progress || 0)) * 680;
-    beep({freq, duration:0.02, type:"square", gain:0.03});
-  }
-
-  // Timbre distinto por categoría: antes de leer el reto, el oído ya intuye qué toca.
-  const CATEGORY_REVEAL_TONES = {
-    espontanea:   [520, 780],
-    experiencia:  [420, 630, 840],
-    reflexion:    [360, 540],
-    conocimiento: [500, 700, 940]
-  };
-  function soundReveal(category){
-    const tones = CATEGORY_REVEAL_TONES[category] || [520, 780];
-    tones.forEach((freq, i) => {
-      beep({freq, duration:0.14 + i*0.02, type:"sine", gain:0.065, delay:i*0.08});
-    });
-  }
-  function soundComplete(){
-    beep({freq:440, duration:0.12, type:"sine", gain:0.07});
-    beep({freq:660, duration:0.16, type:"sine", gain:0.07, delay:0.1});
-    beep({freq:880, duration:0.22, type:"sine", gain:0.07, delay:0.2});
-  }
-
-  // Vibración (Android/Chrome; iOS Safari no expone navigator.vibrate a las
-  // apps web, así que ahí simplemente no hace nada, sin errores).
-  function vibrate(pattern){
-    if(navigator.vibrate){
-      try{ navigator.vibrate(pattern); }catch(e){}
-    }
-  }
-
-  /* Flash blanco sincronizado con la revelación del reto: refuerza el
-     "hook" visual justo en el instante en que aparece el tema. */
-  function triggerRevealFlash(){
-    const flash = $("#reveal-flash");
-    flash.classList.remove("flash-active");
-    void flash.offsetWidth;
-    flash.classList.add("flash-active");
-  }
-
-  /* Sacudida breve + onda expansiva: refuerzan el "golpe" visual de la
-     revelación junto con el flash. */
-  function triggerRevealShake(){
-    const screen = $("#screen-play");
-    screen.classList.remove("shake-active");
-    void screen.offsetWidth;
-    screen.classList.add("shake-active");
-  }
-  function triggerShockwave(){
-    const wave = $("#reveal-shockwave");
-    wave.classList.remove("shockwave-active");
-    void wave.offsetWidth;
-    wave.classList.add("shockwave-active");
-  }
-
-  /* Efecto máquina de escribir: el texto del reto aparece letra a letra. */
-  function typewriterReveal(el, text){
-    clearTimeout(state.typewriterHandle);
-    el.textContent = "";
-    const speed = Math.max(10, Math.min(26, 700 / Math.max(text.length, 1)));
-    let i = 0;
-    function step(){
-      i++;
-      el.textContent = text.slice(0, i);
-      if(i < text.length){
-        state.typewriterHandle = setTimeout(step, speed);
-      }
-    }
-    step();
-  }
-
-  /* =========================================================
-     6. NAVEGACIÓN / RENDERIZADO DE PANTALLAS
-  ========================================================= */
-  function goTo(screenName){
-    if(state.screen === "play" && screenName !== "play"){
-      stopTimer();
-      clearTimeout(state.typewriterHandle);
-      state.playSubState = "idle";
-    }
-    state.screen = screenName;
-    $(".app-shell").dataset.activeScreen = screenName;
-    $all(".screen").forEach(el => el.classList.toggle("active", el.dataset.screen === screenName));
-    if(screenName === "home") renderHome();
-    if(screenName === "progress") renderProgress();
-    if(screenName === "mychallenges") renderMyChallenges();
-    if(screenName === "pending") renderPendingChallenges();
-    window.scrollTo(0,0);
-  }
-
-  $all("[data-nav]").forEach(btn => btn.addEventListener("click", () => goTo(btn.dataset.nav)));
-
-  /* ---------- HOME ---------- */
-  function renderCategorySelector(){
-    const wrap = $("#category-selector");
-    wrap.innerHTML = "";
-    CATEGORIES.forEach(cat => {
-      const b = document.createElement("button");
-      b.className = "chip rounded-full px-4 py-2 font-display font-bold text-xs tracking-wide shrink-0" + (data.selectedCategory === cat.id ? " selected" : "");
-      b.textContent = cat.label;
-      b.addEventListener("click", () => {
-        data.selectedCategory = cat.id;
-        saveData();
-        renderCategorySelector();
-        renderAvailableCount();
-      });
-      wrap.appendChild(b);
-    });
-  }
-
-  function renderAvailableCount(){
-    const pool = allActiveChallenges().filter(c => data.selectedCategory === "todos" || c.category === data.selectedCategory);
-    $("#available-count").textContent = pool.length + (pool.length === 1 ? " RETO DISPONIBLE" : " RETOS DISPONIBLES");
-  }
-
-  function renderStreak(){
-    const el = $("#home-streak");
-    if(data.streak > 0){
-      el.textContent = data.streak + (data.streak === 1 ? " día seguido" : " días seguidos");
-      el.classList.remove("hidden");
-    }else{
-      el.classList.add("hidden");
-    }
-  }
-
-  function renderHome(){
-    renderCategorySelector();
-    renderAvailableCount();
-    renderStreak();
-  }
-
-  /* ---------- SELECCIÓN DE RETO ---------- */
-  function pickChallenge(){
-    let pool = allActiveChallenges().filter(c => data.selectedCategory === "todos" || c.category === data.selectedCategory);
-    // Un reto de Experiencia ya apuntado como pendiente no puede volver a tocar
-    // hasta que lo marques como hecho.
-    const pendingIds = data.pendingChallenges.map(a => a.challengeId);
-    pool = pool.filter(c => !pendingIds.includes(c.id));
-    if(pool.length === 0) return null;
-
-    // Evitar repetición inmediata: descarta los recientes si hay alternativa suficiente
-    const notRecent = pool.filter(c => !data.recentIds.includes(c.id));
-    const finalPool = notRecent.length > 0 ? notRecent : pool;
-
-    return finalPool[Math.floor(Math.random() * finalPool.length)];
-  }
-
-  function registerRecent(id){
-    data.recentIds.unshift(id);
-    data.recentIds = data.recentIds.slice(0, 6);
-  }
-
-  /* ---------- FLUJO PLAY ---------- */
-  function launchChallenge(chosen){
-    soundClickPlay();
-    vibrate(15);
-    const burst = $("#play-burst");
-    burst.classList.remove("burst-active");
-    void burst.offsetWidth;
-    burst.classList.add("burst-active");
-    // Pequeña pausa para que el estallido de líneas llegue a verse antes de
-    // cambiar de pantalla (si no, el home se oculta antes de pintarse el frame).
-    setTimeout(() => {
-      goTo("play");
-      startSpin(chosen);
-    }, 160);
-  }
-
-  $("#play-btn").addEventListener("click", () => {
-    const chosen = pickChallenge();
-    if(!chosen){
-      showToast("No hay retos en esta categoría todavía.");
-      return;
-    }
-    launchChallenge(chosen);
-  });
-
-  function startSpin(finalChallenge){
-    state.playSubState = "spinning";
-    state.currentChallenge = finalChallenge;
-    state.spinPhrase = SPIN_PHRASE;
-    $("#spin-heading-text").textContent = state.spinPhrase;
-
-    const phraseRow = $("#phrase-row");
-    phraseRow.classList.add("hidden");
-    phraseRow.classList.remove("flex");
-
-    $("#spin-wrap").style.display = "flex";
-    $("#reveal-wrap").classList.add("hidden");
-    $("#reveal-wrap").classList.remove("flex");
-
-    const pool = allActiveChallenges().filter(c => data.selectedCategory === "todos" || c.category === data.selectedCategory);
-    const track = $("#reel-track");
-    track.innerHTML = "";
-
-    // Medido en vivo: el alto del item siempre coincide con el del viewport
-    // (min(26vh, 168px) fijado en CSS), así que la tira encaja en cualquier pantalla.
-    const ITEM_H = $(".reel-viewport").getBoundingClientRect().height;
-    const REEL_LENGTH = 26; // items pintados en la tira
-    const sequence = [];
-    for(let i=0; i<REEL_LENGTH-1; i++){
-      sequence.push(pool[Math.floor(Math.random()*pool.length)]);
-    }
-    sequence.push(finalChallenge); // el último siempre es el elegido real
-
-    sequence.forEach(c => {
-      const div = document.createElement("div");
-      div.className = "reel-item";
-      div.innerHTML = `<p class="font-display font-extrabold text-2xl tight-sm uppercase opacity-90">${escapeHtml(c.text.split(" ").slice(0,5).join(" "))}…</p>`;
-      track.appendChild(div);
-    });
-
-    // El viewport mide lo mismo que un item, así que el desplazamiento final
-    // centra exactamente el último elemento (el reto elegido) en la ventana.
-    const finalOffset = -(ITEM_H * (sequence.length - 1));
-
-    const DURATION = 2600;
-    const startTime = performance.now();
-    let lastTickIndex = -1;
-
-    function easeOutQuint(t){ return 1 - Math.pow(1-t, 5); }
-
-    function frame(now){
-      const elapsed = now - startTime;
-      const t = Math.min(elapsed / DURATION, 1);
-      const eased = easeOutQuint(t);
-      const y = eased * finalOffset;
-      track.style.transform = `translateY(${y}px)`;
-
-      const currentIndex = Math.min(sequence.length - 1, Math.floor(eased * (sequence.length - 1)));
-      if(currentIndex !== lastTickIndex){
-        lastTickIndex = currentIndex;
-        if(t < 0.92) soundTick(t);
-      }
-
-      if(t < 1){
-        state.timerHandle = requestAnimationFrame(frame);
-      }else{
-        track.style.transform = `translateY(${finalOffset}px)`;
-        setTimeout(() => revealChallenge(finalChallenge), 160);
-      }
-    }
-    requestAnimationFrame(frame);
-  }
-
-  function escapeHtml(str){
-    const d = document.createElement("div");
-    d.textContent = str;
-    return d.innerHTML;
-  }
-
-  const ACTION_BTN_FULL = "btn-invert w-full rounded-2xl py-4 font-display font-black text-lg tight-sm uppercase shrink-0";
-  const ACTION_BTN_COMPACT = "btn-invert self-center rounded-full px-7 py-3 font-display font-black text-sm tight-sm uppercase shrink-0";
-
-  // EMPEZAR / LO HE HECHO son la acción principal: CTA ancho completo.
-  function setActionButtonFull(text, onClick){
-    const btn = $("#action-btn");
-    btn.className = ACTION_BTN_FULL;
-    btn.textContent = text;
-    btn.onclick = onClick;
-  }
-
-  // TERMINAR AHORA es una salida secundaria: píldora pequeña, solo el texto
-  // y un poco de relleno alrededor, sin ocupar toda la fila.
-  function setActionButtonCompact(text, onClick){
-    const btn = $("#action-btn");
-    btn.className = ACTION_BTN_COMPACT;
-    btn.textContent = text;
-    btn.onclick = onClick;
-  }
-
-  function revealChallenge(challenge){
-    state.playSubState = "revealed";
-    soundReveal(challenge.category);
-    triggerRevealFlash();
-    triggerRevealShake();
-    triggerShockwave();
-    vibrate([12, 30, 12]);
-
-    $("#spin-wrap").style.display = "none";
-    const revealWrap = $("#reveal-wrap");
-    revealWrap.classList.remove("hidden");
-    revealWrap.classList.add("flex");
-
-    $("#reveal-headline").querySelector("p").textContent = "Te toca.";
-    const challengeTextEl = $("#challenge-text");
-    challengeTextEl.classList.remove("len-md", "len-lg");
-    if(challenge.text.length > 85){
-      challengeTextEl.classList.add("len-lg");
-    }else if(challenge.text.length > 50){
-      challengeTextEl.classList.add("len-md");
-    }
-    typewriterReveal(challengeTextEl, challenge.text);
-    $("#challenge-meta").textContent = categoryLabel(challenge.category);
-    $("#challenge-duration-label").textContent = challenge.durationType === "pending" ? "" : "⏱ " + formatDuration(challenge);
-
-    // Muestra debajo del logo la frase que acompañó la selección, con el
-    // icono de ayuda porque la frase fija ("Quemando los barcos.") lo requiere.
-    $("#phrase-label").textContent = state.spinPhrase;
-    const phraseRow = $("#phrase-row");
-    phraseRow.classList.remove("hidden");
-    phraseRow.classList.add("flex");
-    $("#phrase-tooltip-wrap").style.display = "inline-flex";
-
-    $("#timer-display").classList.add("hidden");
-    $("#timer-value").parentElement.classList.remove("timer-urgent");
-    $("#micro-copy").classList.add("hidden");
-    state.timerPhase = null;
-
-    let startLabel = "EMPEZAR";
-    if(challenge.durationType === "research") startLabel = "INVESTIGAR";
-    else if(challenge.durationType === "pending") startLabel = "APUNTAR";
-    setActionButtonCompact(startLabel, () => handleStart(challenge));
-
-    // Retrigger reveal animation
-    [$("#reveal-headline"), $("#challenge-card")].forEach(el => {
-      el.classList.remove("reveal-enter");
-      void el.offsetWidth;
-      el.classList.add("reveal-enter");
-    });
-
-    registerRecent(challenge.id);
-  }
-
-  // Bifurca según el tipo de reto: los de cronómetro arrancan el temporizador
-  // en pantalla; los de días/semanas/mes se apuntan en "Retos en curso".
-  function handleStart(challenge){
-    if(challenge.durationType === "pending"){
-      savePendingChallenge(challenge);
-    }else if(challenge.durationType === "research"){
-      startResearchPhase(challenge);
-    }else{
-      beginTimer();
-    }
-  }
-
-  function savePendingChallenge(challenge){
-    state.playSubState = "active";
-    const entry = {
-      activeId: "pending-" + Date.now() + "-" + Math.floor(Math.random()*1000),
-      challengeId: challenge.id,
-      text: challenge.text,
-      category: challenge.category,
-      points: challenge.points,
-      savedAt: Date.now()
-    };
-    data.pendingChallenges.push(entry);
-    saveData();
-    updatePendingBadge();
-
-    $("#reveal-headline").querySelector("p").textContent = "Apuntado.";
-    $("#challenge-duration-label").textContent = "";
-    const mc = $("#micro-copy");
-    mc.textContent = "Está guardado en tus retos pendientes.";
-    mc.classList.remove("hidden");
-
-    setActionButtonCompact("VOLVER AL INICIO", () => goTo("home"));
-  }
-
-  // ---- "Conocimiento": fase 1, investigar (10 min) ----
-  function startResearchPhase(challenge){
-    state.playSubState = "active";
-    state.timerPhase = "research";
-    state.timerTotal = challenge.researchDuration;
-    state.timerRemaining = challenge.researchDuration;
-
-    $("#reveal-headline").querySelector("p").textContent = "Investigando.";
-    $("#challenge-duration-label").textContent = "";
-    $("#timer-display").classList.remove("hidden");
-    $("#timer-value").textContent = formatTimer(state.timerRemaining);
-    $("#timer-arc").style.strokeDashoffset = "0";
-
-    const mc = $("#micro-copy");
-    mc.textContent = "Investígalo a fondo. Luego tendrás que hablar de ello.";
-    mc.classList.remove("hidden");
-
-    setActionButtonCompact("YA SÉ SUFICIENTE", finishResearchPhase);
-
-    tickTimer();
-  }
-
-  // ---- "Conocimiento": transición — investigación terminada, toca hablar ----
-  function finishResearchPhase(){
-    stopTimer();
-    state.timerPhase = null;
-
-    $("#reveal-headline").querySelector("p").textContent = "Tiempo de investigar.";
-    $("#timer-value").parentElement.classList.remove("timer-urgent");
-    $("#timer-value").textContent = "00:00";
-    $("#timer-arc").style.strokeDashoffset = String(TIMER_RING_CIRCUMFERENCE);
-
-    const mc = $("#micro-copy");
-    mc.textContent = "Cuenta lo que has aprendido.";
-    mc.classList.remove("hidden");
-
-    setActionButtonCompact("HABLAR", beginTalkPhase);
-  }
-
-  // ---- "Conocimiento": fase 2, hablar de lo aprendido (1 min) ----
-  function beginTalkPhase(){
-    const challenge = state.currentChallenge;
-    if(!challenge) return;
-    state.playSubState = "active";
-    state.timerPhase = "talk";
-    state.timerTotal = challenge.talkDuration;
-    state.timerRemaining = challenge.talkDuration;
-
-    $("#reveal-headline").querySelector("p").textContent = "Hablando.";
-    $("#timer-value").textContent = formatTimer(state.timerRemaining);
-    $("#timer-arc").style.strokeDashoffset = "0";
-
-    const mc = $("#micro-copy");
-    mc.textContent = "Habla de lo que has aprendido.";
-    mc.classList.remove("hidden");
-
-    setActionButtonCompact("TERMINAR AHORA", () => finishTimer(true));
-
-    document.body.classList.add("breathing");
-    document.body.classList.remove("breathing-fast");
-
-    tickTimer();
-  }
-
-  function beginTimer(){
-    const challenge = state.currentChallenge;
-    if(!challenge) return;
-    state.playSubState = "active";
-    state.timerTotal = challenge.duration;
-    state.timerRemaining = challenge.duration;
-
-    $("#reveal-headline").querySelector("p").textContent = categoryLabel(challenge.category);
-    $("#challenge-duration-label").textContent = "";
-    $("#timer-display").classList.remove("hidden");
-    $("#timer-value").textContent = formatTimer(state.timerRemaining);
-    $("#timer-arc").style.strokeDashoffset = "0";
-
-    const mc = $("#micro-copy");
-    mc.textContent = MICROCOPY[Math.floor(Math.random()*MICROCOPY.length)];
-    mc.classList.remove("hidden");
-
-    setActionButtonCompact("TERMINAR AHORA", () => finishTimer(true));
-
-    document.body.classList.add("breathing");
-    document.body.classList.remove("breathing-fast");
-
-    tickTimer();
-  }
-
-  const TIMER_RING_CIRCUMFERENCE = 2 * Math.PI * 90;
-
-  function updateTimerRing(){
-    const ratio = state.timerTotal > 0 ? state.timerRemaining / state.timerTotal : 0;
-    const offset = TIMER_RING_CIRCUMFERENCE * (1 - ratio);
-    $("#timer-arc").style.strokeDashoffset = offset.toFixed(2);
-  }
-
-  function tickTimer(){
-    clearTimeout(state.timerHandle);
-    if(state.timerRemaining <= 0){
-      if(state.timerPhase === "research"){
-        finishResearchPhase();
-      }else{
-        finishTimer(false);
-      }
-      return;
-    }
-    $("#timer-value").textContent = formatTimer(state.timerRemaining);
-    updateTimerRing();
-    if(state.timerRemaining <= 10){
-      $("#timer-value").parentElement.classList.add("timer-urgent");
-      document.body.classList.remove("breathing");
-      document.body.classList.add("breathing-fast");
-    }
-    state.timerHandle = setTimeout(() => {
-      state.timerRemaining -= 1;
-      tickTimer();
-    }, 1000);
-  }
-
-  function stopTimer(){
-    clearTimeout(state.timerHandle);
-    state.timerHandle = null;
-    document.body.classList.remove("breathing", "breathing-fast");
-  }
-
-  function finishTimer(manual){
-    stopTimer();
-    state.playSubState = "completed";
-    state.timerPhase = null;
-    const challenge = state.currentChallenge;
-
-    $("#reveal-headline").querySelector("p").textContent = "Tiempo.";
-    $("#timer-value").parentElement.classList.remove("timer-urgent");
-    $("#timer-value").textContent = "00:00";
-    $("#timer-arc").style.strokeDashoffset = String(TIMER_RING_CIRCUMFERENCE);
-    $("#micro-copy").classList.add("hidden");
-
-    setActionButtonCompact("LO HE HECHO", () => completeChallenge(challenge));
-  }
-
-  function completeChallenge(challenge){
-    soundComplete();
-    vibrate([15, 40, 15, 40, 25]);
-    data.xp += challenge.points;
-    data.stats[challenge.category] = (data.stats[challenge.category] || 0) + 1;
-
-    const today = new Date().toISOString().slice(0,10);
-    if(data.lastCompletedDate !== today){
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-      data.streak = (data.lastCompletedDate === yesterday) ? data.streak + 1 : 1;
-      data.lastCompletedDate = today;
-    }
-
-    data.completedLog.unshift({
-      id: challenge.id,
-      text: challenge.text,
-      category: challenge.category,
-      completedAt: new Date().toISOString(),
-      xp: challenge.points
-    });
-    data.completedLog = data.completedLog.slice(0, 40);
-
-    registerRecent(challenge.id);
-    saveData();
-
-    $("#reveal-headline").querySelector("p").textContent = "Reto completado.";
-    $("#challenge-text").classList.remove("len-md", "len-lg");
-    $("#challenge-text").textContent = "+" + challenge.points + " XP";
-    $("#challenge-meta").textContent = categoryLabel(challenge.category);
-    $("#challenge-duration-label").textContent = "";
-
-    setActionButtonCompact("VOLVER AL INICIO", () => goTo("home"));
-
-    [$("#reveal-headline"), $("#challenge-card")].forEach(el => {
-      el.classList.remove("reveal-enter");
-      void el.offsetWidth;
-      el.classList.add("reveal-enter");
-    });
-  }
-
-  /* ---------- RETOS PENDIENTES (Experiencia, sin plazo) ---------- */
-  function updatePendingBadge(){
-    const badge = $("#pending-badge");
-    const count = data.pendingChallenges.length;
-    if(count > 0){
-      badge.textContent = String(count);
-      badge.classList.remove("hidden");
-      badge.classList.add("flex");
-    }else{
-      badge.classList.add("hidden");
-      badge.classList.remove("flex");
-    }
-  }
-
-  function formatSavedAt(savedAt){
-    const days = Math.floor((Date.now() - savedAt) / (24*60*60*1000));
-    if(days <= 0) return "Apuntado hoy";
-    if(days === 1) return "Apuntado ayer";
-    return "Apuntado hace " + days + " días";
-  }
-
-  function renderPendingChallenges(){
-    const list = $("#pending-list");
-    list.innerHTML = "";
-    if(data.pendingChallenges.length === 0){
-      $("#pending-empty").classList.remove("hidden");
-      return;
-    }
-    $("#pending-empty").classList.add("hidden");
-
-    const sorted = [...data.pendingChallenges].sort((a,b) => a.savedAt - b.savedAt);
-    sorted.forEach(entry => {
-      const row = document.createElement("div");
-      row.className = "card-dark rounded-2xl p-4 flex flex-col gap-3";
-      row.innerHTML = `
-        <div>
-          <p class="font-num text-[11px] uppercase tracking-wide opacity-60 mb-1">${categoryLabel(entry.category)}</p>
-          <p class="font-display font-extrabold text-base leading-snug">${escapeHtml(entry.text)}</p>
-        </div>
-        <div class="flex items-center justify-between gap-3">
-          <p class="font-num text-xs uppercase tracking-wide opacity-70">${formatSavedAt(entry.savedAt)}</p>
-          <button class="btn-invert rounded-full px-5 py-2 font-display font-black text-xs tight-sm uppercase shrink-0" data-complete-pending="${entry.activeId}">Lo he hecho</button>
-        </div>`;
-      list.appendChild(row);
-    });
-
-    list.querySelectorAll("[data-complete-pending]").forEach(btn => {
-      btn.addEventListener("click", () => completePendingChallenge(btn.dataset.completePending));
-    });
-  }
-
-  function completePendingChallenge(activeId){
-    const entry = data.pendingChallenges.find(a => a.activeId === activeId);
-    if(!entry) return;
-    soundComplete();
-    vibrate([15, 40, 15, 40, 25]);
-
-    data.xp += entry.points;
-    data.stats[entry.category] = (data.stats[entry.category] || 0) + 1;
-
-    const today = new Date().toISOString().slice(0,10);
-    if(data.lastCompletedDate !== today){
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
-      data.streak = (data.lastCompletedDate === yesterday) ? data.streak + 1 : 1;
-      data.lastCompletedDate = today;
-    }
-
-    data.completedLog.unshift({
-      id: entry.challengeId,
-      text: entry.text,
-      category: entry.category,
-      completedAt: new Date().toISOString(),
-      xp: entry.points
-    });
-    data.completedLog = data.completedLog.slice(0, 40);
-
-    data.pendingChallenges = data.pendingChallenges.filter(a => a.activeId !== activeId);
-    saveData();
-    updatePendingBadge();
-    renderPendingChallenges();
-    showToast("Reto completado. +" + entry.points + " XP");
-  }
-
-  /* ---------- PROGRESO ---------- */
-  function renderProgress(){
-    $("#stat-total").textContent = data.completedLog.length;
-    $("#stat-xp").textContent = data.xp;
-    $("#stat-streak").textContent = data.streak;
-
-    const breakdown = $("#category-breakdown");
-    breakdown.innerHTML = "";
-    CATEGORIES.filter(c => c.id !== "todos").forEach(cat => {
-      const count = data.stats[cat.id] || 0;
-      const max = Math.max(1, ...Object.values(data.stats));
-      const pct = Math.round((count / max) * 100);
-      const row = document.createElement("div");
-      row.innerHTML = `
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="font-display font-bold text-xs uppercase tracking-wide opacity-85">${cat.label}</span>
-          <span class="font-num font-bold text-xs">${count}</span>
-        </div>
-        <div class="progress-bar-track h-1.5 rounded-full overflow-hidden">
-          <div class="progress-bar-fill h-full rounded-full" style="width:${pct}%"></div>
-        </div>`;
-      breakdown.appendChild(row);
-    });
-
-    const historyList = $("#history-list");
-    historyList.innerHTML = "";
-    if(data.completedLog.length === 0){
-      historyList.innerHTML = `<p class="font-medium text-sm opacity-60 py-2">Todavía no has completado ningún reto.</p>`;
-    }else{
-      data.completedLog.slice(0,12).forEach(item => {
-        const row = document.createElement("div");
-        row.className = "flex items-center gap-3 py-2 border-b";
-        row.style.borderColor = "var(--line-soft)";
-        row.innerHTML = `
-          <span class="font-display font-black">✓</span>
-          <span class="font-medium text-sm flex-1 truncate">${escapeHtml(item.text)}</span>
-          <span class="font-num text-[11px] opacity-60 shrink-0">+${item.xp}</span>`;
-        historyList.appendChild(row);
-      });
-    }
-  }
-
-  /* ---------- MIS RETOS ---------- */
-  function populateCategorySelect(){
-    const sel = $("#input-category");
-    sel.innerHTML = "";
-    // "Conocimiento" tiene su propio mecanismo de dos fases (investigar + hablar)
-    // que no aplica a los retos que tú mismo escribas, así que no aparece aquí.
-    CATEGORIES.filter(c => c.id !== "todos" && c.id !== "conocimiento").forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.id;
-      opt.textContent = cat.label;
-      sel.appendChild(opt);
-    });
-  }
-  populateCategorySelect();
-
-  const CUSTOM_CHALLENGE_POINTS = 25;
-
-  $("#save-challenge-btn").addEventListener("click", () => {
-    const text = $("#input-text").value.trim();
-    if(text.length < 6){
-      showToast("Escribe un reto un poco más concreto.");
-      return;
-    }
-    const category = $("#input-category").value;
-    const duration = parseInt($("#input-duration").value, 10);
-
-    if(state.editingChallengeId){
-      const idx = data.customChallenges.findIndex(c => c.id === state.editingChallengeId);
-      if(idx !== -1){
-        data.customChallenges[idx] = mk(state.editingChallengeId, text, category, duration, CUSTOM_CHALLENGE_POINTS);
-      }
-      state.editingChallengeId = null;
-      showToast("Reto actualizado.");
-    }else{
-      const id = "custom-" + Date.now();
-      data.customChallenges.push(mk(id, text, category, duration, CUSTOM_CHALLENGE_POINTS));
-      showToast("Reto guardado.");
-    }
-    saveData();
-    resetForm();
-    renderMyChallenges();
-  });
-
-  $("#cancel-edit-btn").addEventListener("click", resetForm);
-
-  function resetForm(){
-    state.editingChallengeId = null;
-    $("#input-text").value = "";
-    $("#input-category").value = "espontanea";
-    $("#input-duration").value = "300";
-    $("#form-title").textContent = "Describe tu reto";
-    $("#save-challenge-btn").textContent = "Guardar reto";
-    $("#cancel-edit-btn").classList.add("hidden");
-  }
-
-  function editCustomChallenge(id){
-    const c = data.customChallenges.find(c => c.id === id);
-    if(!c) return;
-    state.editingChallengeId = id;
-    $("#input-text").value = c.text;
-    $("#input-category").value = c.category;
-    $("#input-duration").value = String(c.duration);
-    $("#form-title").textContent = "Editar reto";
-    $("#save-challenge-btn").textContent = "Guardar cambios";
-    $("#cancel-edit-btn").classList.remove("hidden");
-    $("#screen-mychallenges").scrollTo({top:0, behavior:"smooth"});
-  }
-
-  function deleteCustomChallenge(id){
-    data.customChallenges = data.customChallenges.filter(c => c.id !== id);
-    saveData();
-    renderMyChallenges();
-    showToast("Reto eliminado.");
-  }
-
-  function toggleDefaultChallenge(id){
-    const idx = data.disabledDefaultIds.indexOf(id);
-    if(idx === -1) data.disabledDefaultIds.push(id);
-    else data.disabledDefaultIds.splice(idx,1);
-    saveData();
-    renderMyChallenges();
-  }
-
-  $("#restore-defaults-btn").addEventListener("click", () => {
-    data.disabledDefaultIds = [];
-    saveData();
-    renderMyChallenges();
-    showToast("Retos predeterminados restaurados.");
-  });
-
-  function renderMyChallenges(){
-    const customList = $("#custom-list");
-    customList.innerHTML = "";
-    if(data.customChallenges.length === 0){
-      $("#custom-empty").classList.remove("hidden");
-    }else{
-      $("#custom-empty").classList.add("hidden");
-      data.customChallenges.forEach(c => {
-        const row = document.createElement("div");
-        row.className = "card-dark rounded-2xl p-4 flex items-start gap-3";
-        row.innerHTML = `
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold text-sm leading-snug">${escapeHtml(c.text)}</p>
-            <p class="font-num text-[11px] opacity-60 mt-1 uppercase">${categoryLabel(c.category)} · ${formatDuration(c)}</p>
-          </div>
-          <div class="flex gap-2 shrink-0">
-            <button class="btn-ghost rounded-full px-4 py-2 text-xs font-bold" data-edit="${c.id}">Editar</button>
-            <button class="btn-ghost rounded-full px-4 py-2 text-xs font-bold" data-delete="${c.id}">Eliminar</button>
-          </div>`;
-        customList.appendChild(row);
-      });
-      customList.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => editCustomChallenge(b.dataset.edit)));
-      customList.querySelectorAll("[data-delete]").forEach(b => b.addEventListener("click", () => deleteCustomChallenge(b.dataset.delete)));
-    }
-
-    const defaultList = $("#default-list");
-    defaultList.innerHTML = "";
-    DEFAULT_CHALLENGES.forEach(c => {
-      const disabled = data.disabledDefaultIds.includes(c.id);
-      const row = document.createElement("div");
-      row.className = "flex items-center gap-3 py-2.5 border-b";
-      row.style.borderColor = "var(--line-soft)";
-      row.style.opacity = disabled ? "0.45" : "1";
-      row.innerHTML = `
-        <div class="flex-1 min-w-0">
-          <p class="font-medium text-xs leading-snug truncate">${escapeHtml(c.text)}</p>
-          <p class="font-num text-[10px] opacity-60 mt-0.5 uppercase">${categoryLabel(c.category)}</p>
-        </div>
-        <button class="btn-ghost rounded-full px-4 py-1.5 text-[11px] font-bold shrink-0" data-toggle="${c.id}">${disabled ? "Activar" : "Eliminar"}</button>`;
-      defaultList.appendChild(row);
-    });
-    defaultList.querySelectorAll("[data-toggle]").forEach(b => b.addEventListener("click", () => toggleDefaultChallenge(b.dataset.toggle)));
-  }
-
-  /* =========================================================
-     7. INICIALIZACIÓN
-  ========================================================= */
-
-  /* Tooltip "¿Qué significa quemar los barcos?": position:fixed calculado
-     en JS para que nunca quede recortado por el overflow:hidden de la app,
-     ni se salga de la pantalla en móvil. */
-  function setupTooltip(){
-    const dot = $("#phrase-tooltip-wrap .info-dot");
-    const panel = $("#phrase-tooltip-wrap .tooltip-panel");
-    if(!dot || !panel) return;
-    let pinned = false;
-
-    function positionPanel(){
-      const dotRect = dot.getBoundingClientRect();
-      const margin = 16;
-      const panelWidth = panel.offsetWidth;
-      let left = dotRect.left;
-      left = Math.min(left, window.innerWidth - panelWidth - margin);
-      left = Math.max(left, margin);
-      panel.style.left = left + "px";
-      panel.style.top = (dotRect.bottom + 10) + "px";
-    }
-    function show(){ positionPanel(); panel.classList.add("tooltip-visible"); }
-    function hide(){ panel.classList.remove("tooltip-visible"); }
-
-    dot.addEventListener("mouseenter", show);
-    dot.addEventListener("mouseleave", () => { if(!pinned) hide(); });
-    dot.addEventListener("click", (e) => {
-      e.stopPropagation();
-      pinned = !pinned;
-      if(pinned) show(); else hide();
-    });
-    document.addEventListener("click", (e) => {
-      if(pinned && !e.target.closest("#phrase-tooltip-wrap")){
-        pinned = false;
-        hide();
-      }
-    });
-    window.addEventListener("resize", () => {
-      if(panel.classList.contains("tooltip-visible")) positionPanel();
-    });
-  }
-
-  function setupMirrorToggle(){
-    const toggle = $("#mirror-toggle");
-    const shell = $(".app-shell");
-    toggle.checked = !!data.mirrorMode;
-    shell.classList.toggle("mirror-mode", toggle.checked);
-    toggle.addEventListener("change", () => {
-      data.mirrorMode = toggle.checked;
-      saveData();
-      shell.classList.toggle("mirror-mode", toggle.checked);
-    });
-  }
-
-  // "Sorpréndeme": mantener pulsado 2s el logo del topbar elige un reto de
-  // CUALQUIER categoría, saltándose el selector, como un gesto oculto.
-  function setupLogoLongPress(){
-    const logoBtn = document.querySelector('#topbar [data-nav="home"]');
-    if(!logoBtn) return;
-    let pressTimer = null;
-    let longPressFired = false;
-
-    function pickSurpriseChallenge(){
-      let pool = allActiveChallenges();
-      const pendingIds = data.pendingChallenges.map(a => a.challengeId);
-      pool = pool.filter(c => !pendingIds.includes(c.id));
-      if(pool.length === 0) return null;
-      const notRecent = pool.filter(c => !data.recentIds.includes(c.id));
-      const finalPool = notRecent.length > 0 ? notRecent : pool;
-      return finalPool[Math.floor(Math.random() * finalPool.length)];
-    }
-
-    function start(){
-      longPressFired = false;
-      clearTimeout(pressTimer);
-      pressTimer = setTimeout(() => {
-        const chosen = pickSurpriseChallenge();
-        if(!chosen) return;
-        longPressFired = true;
-        vibrate([20, 40, 20, 40, 30]);
-        showToast("Sorpréndeme activado.");
-        launchChallenge(chosen);
-      }, 2000);
-    }
-    function cancel(){ clearTimeout(pressTimer); }
-
-    logoBtn.addEventListener("pointerdown", start);
-    logoBtn.addEventListener("pointerup", cancel);
-    logoBtn.addEventListener("pointercancel", cancel);
-    logoBtn.addEventListener("pointerleave", cancel);
-    logoBtn.addEventListener("click", (e) => {
-      if(longPressFired){ e.preventDefault(); e.stopPropagation(); }
-    }, true);
-  }
-
-  // Deslizar hacia los lados en la home: a la izquierda abre Progreso, a la
-  // derecha abre Retos pendientes. No interfiere con el scroll horizontal
-  // propio del selector de categorías.
-  function setupHomeSwipe(){
-    const el = $("#screen-home");
-    if(!el) return;
-    let startX = 0, startY = 0, tracking = false;
-
-    el.addEventListener("touchstart", (e) => {
-      if(e.target.closest("#category-selector")) { tracking = false; return; }
-      const t = e.touches[0];
-      startX = t.clientX;
-      startY = t.clientY;
-      tracking = true;
-    }, { passive:true });
-
-    el.addEventListener("touchend", (e) => {
-      if(!tracking) return;
-      const t = e.changedTouches[0];
-      const dx = t.clientX - startX;
-      const dy = t.clientY - startY;
-      if(Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5){
-        vibrate(10);
-        if(dx < 0) goTo("progress");
-        else goTo("pending");
-      }
-    }, { passive:true });
-  }
-
-  function init(){
-    resetForm();
-    setupTooltip();
-    setupMirrorToggle();
-    setupLogoLongPress();
-    setupHomeSwipe();
-    updatePendingBadge();
-    goTo("home");
-  }
-
-  init();
-
-  // Registra el service worker para poder instalar la app y abrirla sin conexión.
-  if("serviceWorker" in navigator){
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("sw.js").catch(() => {});
-    });
-  }
-
-})();
-</script>
 </body>
 </html>
