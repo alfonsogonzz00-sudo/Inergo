@@ -1,5 +1,10 @@
 # Cambios
 
+## v2.1.2
+
+- **La ruleta vuelve a verse siempre.** Con «Reducir movimiento» activado en el sistema (Mac, Windows, iPhone) la v2 se la saltaba; la versión original la mostraba. Es parte del producto, así que se muestra siempre.
+- **La ruleta dura más:** unos 4 segundos desde que pulsas PLAY hasta que aparece el reto (antes ~3).
+
 ## v2.1.1
 
 - **Todos los archivos de la app en la raíz, sin carpetas.** GitHub aplana los archivos al arrastrarlos y la v2.1.0 buscaba `js/` y `fonts/`: la app no arrancaba.
@@ -53,4 +58,3 @@
 - Áreas táctiles de ~40 px en los iconos superiores.
 - Lectores de pantalla: anuncio del reto revelado, estados de los botones, foco al cambiar de pantalla, diálogos accesibles, `Escape` para cerrar.
 - «Eliminar» en retos predeterminados pasa a «Desactivar» (no se borran, solo salen del sorteo).
-- Con «reducir movimiento» activado, el reto se revela sin el carrete largo.

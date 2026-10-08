@@ -237,7 +237,6 @@
   // Efecto máquina de escribir: el texto del reto aparece letra a letra.
   function typewriterReveal(el, text){
     clearTimeout(state.typewriterHandle);
-    if(reducedMotion.matches){ el.textContent = text; return; }
     el.textContent = "";
     const speed = Math.max(10, Math.min(26, 700 / Math.max(text.length, 1)));
     let i = 0;
@@ -411,11 +410,6 @@
     $("#reveal-wrap").classList.add("hidden");
     $("#reveal-wrap").classList.remove("flex");
 
-    if(reducedMotion.matches){
-      state.revealTimeout = setTimeout(() => revealChallenge(finalChallenge), 120);
-      return;
-    }
-
     let pool = Core.poolFor(data, data.selectedCategory);
     if(pool.length === 0) pool = [finalChallenge];
     const track = $("#reel-track");
@@ -425,7 +419,9 @@
     // Medido en vivo: el alto del item siempre coincide con el del viewport
     // (min(26vh, 168px) fijado en CSS), así que la tira encaja en cualquier pantalla.
     const ITEM_H = $(".reel-viewport").getBoundingClientRect().height;
-    const REEL_LENGTH = 26; // items pintados en la tira
+    // La ruleta es parte del producto: se muestra siempre (también con
+    // "Reducir movimiento" activado, igual que en la versión original).
+    const REEL_LENGTH = 36; // items pintados en la tira
     const sequence = [];
     for(let i=0; i<REEL_LENGTH-1; i++){
       sequence.push(pool[Math.floor(Math.random()*pool.length)]);
@@ -446,7 +442,9 @@
     // centra exactamente el último elemento (el reto elegido) en la ventana.
     const finalOffset = -(ITEM_H * (sequence.length - 1));
 
-    const DURATION = 2600;
+    // ~4 s desde que pulsas PLAY hasta que aparece el reto
+    // (0,16 s de estallido + 3,7 s de ruleta + 0,16 s de pausa).
+    const DURATION = 3700;
     const startTime = performance.now();
     let lastTickIndex = -1;
 
