@@ -8,7 +8,7 @@
    · Al publicar una versión nueva, sube VERSION aquí y el ?v= en
      inergo.html (ver README → "Publicar una versión nueva").
 ========================================================= */
-const VERSION = "2.1.0";
+const VERSION = "2.1.1";
 const CACHE_NAME = "inergo-" + VERSION;
 const HTML_FALLBACK = "./inergo.html";
 
@@ -16,12 +16,12 @@ const APP_SHELL = [
   "./",
   "./inergo.html",
   "./inergo.css?v=" + VERSION,
-  "./js/inergo-config.js?v=" + VERSION,
-  "./js/inergo-core.js?v=" + VERSION,
-  "./js/inergo-cloud.js?v=" + VERSION,
-  "./js/inergo-app.js?v=" + VERSION,
-  "./fonts/inter-latin-var.woff2",
-  "./fonts/manrope-latin-var.woff2",
+  "./inergo-config.js?v=" + VERSION,
+  "./inergo-core.js?v=" + VERSION,
+  "./inergo-cloud.js?v=" + VERSION,
+  "./inergo-app.js?v=" + VERSION,
+  "./inter-latin-var.woff2",
+  "./manrope-latin-var.woff2",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
@@ -32,7 +32,11 @@ const APP_SHELL = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(APP_SHELL.map((url) => new Request(url, { cache: "reload" }))))
+      // Uno a uno y sin fallar en bloque: si faltara algún archivo, la versión
+      // nueva se instala igual (lo que falte se pedirá a la red cuando haga falta).
+      .then((cache) => Promise.all(APP_SHELL.map((url) =>
+        cache.add(new Request(url, { cache: "reload" })).catch(() => null)
+      )))
       .then(() => self.skipWaiting())
   );
 });
@@ -109,7 +113,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(networkFirstHTML(request));
     return;
   }
-  if(url.searchParams.has("v") || url.pathname.startsWith("/fonts/")){
+  if(url.searchParams.has("v") || url.pathname.endsWith(".woff2")){
     event.respondWith(cacheFirst(request));
     return;
   }

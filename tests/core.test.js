@@ -4,7 +4,11 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const C = require("../js/inergo-core.js");
+const path = require("node:path");
+const fs = require("node:fs");
+// Funciona con el test en tests/ o suelto en la raíz del repositorio.
+const corePath = [path.join(__dirname, "inergo-core.js"), path.join(__dirname, "..", "inergo-core.js")].find(p => fs.existsSync(p));
+const C = require(corePath);
 
 function fresh(){ return C.defaultData(); }
 // Generador pseudoaleatorio fijo para que los sorteos sean reproducibles.

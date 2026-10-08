@@ -6,7 +6,7 @@
    · inicio de sesión por código o enlace enviado al email
    · alta, edición y activación de retos (solo administradores; lo
      garantiza la base de datos, no este archivo)
-   Depende de js/inergo-config.js (window.INERGO_CONFIG).
+   Depende de inergo-config.js (window.INERGO_CONFIG).
 ========================================================= */
 (function(){
   "use strict";

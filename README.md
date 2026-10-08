@@ -22,7 +22,7 @@ Los retos que salen al tirar se gestionan **desde la propia app**, sin tocar có
 - **Añadir:** escribe el reto, elige categoría (y tiempo si es Espontánea o Reflexión) y *Publicar reto*. Sale al tirar en cuanto se publica.
 - **Editar / desactivar:** desde la lista. Desactivar no borra: el reto deja de salir y se puede reactivar.
 - **Cada categoría tiene su mecánica:** Espontánea y Reflexión con cronómetro, Experiencia va a Pendientes, Conocimiento investiga 10 min y habla 1 min. La base de datos no permite mezclarlas.
-- **Sin conexión:** la app usa la última lista descargada; si nunca ha conectado, los 103 retos de serie (`js/inergo-core.js`).
+- **Sin conexión:** la app usa la última lista descargada; si nunca ha conectado, los 103 retos de serie (`inergo-core.js`).
 - **Quién puede editar:** solo los emails de la tabla privada `private.admin_emails`, y solo con el email confirmado. Para añadir a alguien, en Supabase → SQL Editor:
   `insert into private.admin_emails (email) values ('otra@persona.com');`
 
@@ -36,48 +36,55 @@ Los retos que salen al tirar se gestionan **desde la propia app**, sin tocar có
 
 - `supabase/migrations/` — tablas, función `is_admin()` y reglas de seguridad (RLS). Ya aplicadas en el proyecto `Inergo` (eu-west-1).
 - `supabase/seed.sql` — los 103 retos de serie con los mismos ids que la app. Se puede ejecutar varias veces sin duplicar.
-- Configuración pública del cliente en `js/inergo-config.js` (URL y clave *publishable*, públicas por diseño). **Nunca** pongas ahí la clave *secret* ni la *service_role*.
+- Configuración pública del cliente en `inergo-config.js` (URL y clave *publishable*, públicas por diseño). **Nunca** pongas ahí la clave *secret* ni la *service_role*.
 
 ---
 
 ## Estructura
 
+Todos los archivos que usa la app están **en la raíz, sin carpetas**: así da igual cómo se suban a GitHub.
+
 ```
 inergo.html              ← la app (solo marcado; sin código en línea)
 inergo.css               ← estilos COMPILADOS (no editar a mano)
-js/inergo-config.js      ← URL y clave pública de Supabase
-js/inergo-core.js        ← lógica pura: retos de serie, catálogo, sorteo, XP, racha, reto activo, copias
-js/inergo-cloud.js       ← conexión con Supabase: catálogo, inicio de sesión, gestión de retos
-js/inergo-app.js         ← interfaz: pantallas, animaciones, sonido, ajustes, panel de catálogo
-supabase/                ← migraciones SQL y retos de serie
-fonts/                   ← Inter y Manrope autoalojadas (funcionan sin conexión)
+inergo-config.js         ← URL y clave pública de Supabase
+inergo-core.js           ← lógica pura: retos de serie, catálogo, sorteo, XP, racha, reto activo, copias
+inergo-cloud.js          ← conexión con Supabase: catálogo, inicio de sesión, gestión de retos
+inergo-app.js            ← interfaz: pantallas, animaciones, sonido, ajustes, panel de catálogo
+inter-latin-var.woff2, manrope-latin-var.woff2   ← fuentes autoalojadas
 manifest.json            ← datos de instalación (nombre, iconos, accesos directos)
 sw.js                    ← service worker: offline y actualizaciones
 vercel.json              ← "/" carga inergo.html + cabeceras de seguridad
-og-image.png             ← imagen al compartir el enlace (WhatsApp, Instagram…)
+og-image.png             ← imagen al compartir el enlace
 icon-*.png, apple-touch-icon.png
-tools/                   ← fuente del CSS y configuración de Tailwind (no se usa en producción)
+```
+
+Material de trabajo (no lo usa la app; si se sube aplanado a la raíz no pasa nada):
+
+```
+tools/                   ← fuente del CSS y configuración de Tailwind
 tests/                   ← tests de la lógica crítica
-docs/ROADMAP.md          ← lo siguiente: cuentas, sincronización, push, analítica
+supabase/                ← migraciones SQL y retos de serie
+docs/                    ← CHANGELOG y ROADMAP
 ```
 
 ## Subir a GitHub (sin terminal)
 
 1. Abre el repositorio en GitHub desde **Chrome** → **Add file → Upload files**.
-2. Arrastra **todo el contenido** de la carpeta descomprimida (archivos **y** carpetas `js`, `fonts`, `supabase`, `tools`, `tests`, `docs`).
-3. Mensaje del commit, por ejemplo `INERGO v2.1.0`, y **Commit changes**.
+2. Arrastra **todos los archivos** de la carpeta descomprimida. Si GitHub los deja todos en la raíz, es correcto.
+3. Mensaje del commit, por ejemplo `INERGO v2.1.1`, y **Commit changes**.
 4. Vercel despliega solo en 1-2 minutos.
 
-No hay que borrar nada del repositorio: los archivos con el mismo nombre se sustituyen y el resto son nuevos. No hay que tocar la configuración de Vercel (sigue siendo un sitio estático, sin paso de compilación).
+No hay que tocar la configuración de Vercel (sigue siendo un sitio estático, sin paso de compilación).
 
-**Quien ya tenga la app instalada** verá la versión nueva la segunda vez que la abra (la primera el móvil descarga la actualización en segundo plano). Su progreso se conserva.
+**Quien ya tenga la app** verá la versión nueva al volver a abrirla (como mucho, a la segunda). Su progreso se conserva.
 
 ## Publicar una versión nueva (para quien mantenga el código)
 
 1. Sube el número de versión en **tres** sitios, todos iguales:
-   - `js/inergo-core.js` → `APP_VERSION`
+   - `inergo-core.js` → `APP_VERSION`
    - `sw.js` → `VERSION`
-   - `inergo.html` → todos los `?v=` (`inergo.css` y los cuatro `js/…`)
+   - `inergo.html` → todos los `?v=` (`inergo.css` y los cuatro `.js`)
 2. Si cambiaste clases o estilos, regenera el CSS (abajo).
 3. Pasa los tests (abajo).
 

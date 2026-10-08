@@ -1,5 +1,10 @@
 # Cambios
 
+## v2.1.1
+
+- **Todos los archivos de la app en la raíz, sin carpetas.** GitHub aplana los archivos al arrastrarlos y la v2.1.0 buscaba `js/` y `fonts/`: la app no arrancaba.
+- **El service worker ya no se bloquea** si falta algún archivo al actualizar: antes, un solo archivo ausente dejaba al usuario atrapado en la versión anterior.
+
 ## v2.1.0
 
 - **Catálogo de retos en Supabase.** Los retos ya no van escritos en el código: se cargan desde la base de datos al abrir la app y se guarda una copia para usarla sin conexión. Si el servidor no responde, la app usa la última copia o los 103 retos de serie.
@@ -38,7 +43,7 @@
 
 ### Técnica
 - CSS compilado y fuentes autoalojadas: sin dependencias externas, carga más rápida, funciona sin conexión.
-- Código separado en lógica (`js/inergo-core.js`) e interfaz (`js/inergo-app.js`). 27 tests de la lógica crítica.
+- Código separado en lógica (`inergo-core.js`) e interfaz (`inergo-app.js`). 27 tests de la lógica crítica.
 - Service worker nuevo: red primero para el HTML, caché versionada para el resto.
 - Cabeceras de seguridad y CSP estricta en `vercel.json`.
 - Validación de todos los datos guardados o importados.

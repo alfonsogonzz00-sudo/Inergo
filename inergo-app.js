@@ -1,6 +1,6 @@
 /* =========================================================
    INERGO — interfaz
-   Depende de js/inergo-core.js (window.InergoCore).
+   Depende de inergo-core.js (window.InergoCore).
 ========================================================= */
 (function(){
   "use strict";
