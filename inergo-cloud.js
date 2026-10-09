@@ -3,7 +3,7 @@
    ---------------------------------------------------------
    Cliente mínimo sobre la API REST de Supabase (sin librerías):
    · catálogo de retos (lectura pública, con copia para usar sin conexión)
-   · inicio de sesión por código o enlace enviado al email
+   · inicio de sesión con un enlace enviado al email (plantillas de serie de Supabase)
    · alta, edición y activación de retos (solo administradores; lo
      garantiza la base de datos, no este archivo)
    Depende de inergo-config.js (window.INERGO_CONFIG).
@@ -64,9 +64,9 @@
   function friendlyError(status, body){
     const raw = (body && (body.msg || body.error_description || body.message || body.error)) || "";
     if(status === 0) return "Sin conexión con el servidor.";
-    if(/not authorized|not allowed/i.test(raw) && /email/i.test(raw)) return "Ese email aún no puede recibir códigos. Usa el de tu cuenta de Supabase.";
+    if(/not authorized|not allowed/i.test(raw) && /email/i.test(raw)) return "Ese email aún no puede recibir enlaces. Usa el de tu cuenta de Supabase.";
     if(/rate limit|too many|for security purposes/i.test(raw) || status === 429) return "Demasiados intentos. Espera un minuto y vuelve a probar.";
-    if(/expired|invalid/i.test(raw) && /token|otp|code/i.test(raw)) return "Código incorrecto o caducado.";
+    if(/expired|invalid/i.test(raw) && /token|otp|code|link/i.test(raw)) return "El enlace ha caducado o ya se usó. Pide uno nuevo.";
     if(/row-level security|permission denied/i.test(raw) || status === 403) return "Esta cuenta no tiene permisos para hacer eso.";
     if(status === 401) return "La sesión ha caducado. Vuelve a entrar.";
     if(/duplicate key/i.test(raw)) return "Ya existe un reto con ese identificador.";
@@ -138,7 +138,10 @@
   function saveCachedCatalog(rows){ writeJSON(CATALOG_KEY, { savedAt: Date.now(), rows }); }
 
   /* ---------- Inicio de sesión ---------- */
-  async function sendCode(email){
+  // Envía un enlace de acceso al email. Con las plantillas de serie de
+  // Supabase: la primera vez llega «Confirm your signup» y después «Magic Link».
+  // Al abrirlo, Supabase devuelve a la app con la sesión en la URL.
+  async function sendLink(email){
     const clean = String(email || "").trim().toLowerCase();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new Error("Escribe un email válido.");
     const redirect = encodeURIComponent(window.location.origin + "/");
@@ -146,31 +149,24 @@
     return clean;
   }
 
-  async function verifyCode(email, code){
-    const token = String(code || "").replace(/\D/g, "");
-    if(token.length < 6) throw new Error("El código tiene 6 cifras.");
-    try{
-      return storeSession(await request("/auth/v1/verify", { method:"POST", body:{ type:"email", email, token } }));
-    }catch(e){
-      // Cuentas recién creadas: algunos proyectos envían el código como "signup".
-      if(e.status && e.status !== 429){
-        try{ return storeSession(await request("/auth/v1/verify", { method:"POST", body:{ type:"signup", email, token } })); }
-        catch(e2){ throw e; }
-      }
-      throw e;
-    }
-  }
-
-  // Si se entra por el enlace del email, la sesión llega en la URL (#access_token=…).
+  // Vuelta desde el enlace del email: la sesión llega en la URL (#access_token=…)
+  // o, si el enlace ha caducado, un error (#error_description=… o ?error_description=…).
   function consumeUrlSession(){
-    const hash = window.location.hash || "";
-    if(hash.indexOf("access_token=") === -1 && hash.indexOf("error_description=") === -1) return null;
-    const params = new URLSearchParams(hash.slice(1));
-    const clean = () => window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    if(params.get("error_description")){
+    const hashParams = new URLSearchParams((window.location.hash || "").replace(/^#/, ""));
+    const queryParams = new URLSearchParams(window.location.search || "");
+    const errorDesc = hashParams.get("error_description") || queryParams.get("error_description");
+    if(!hashParams.get("access_token") && !errorDesc) return null;
+    const keep = new URLSearchParams(window.location.search || "");
+    ["error", "error_code", "error_description"].forEach(k => keep.delete(k));
+    const rest = keep.toString();
+    const clean = () => window.history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : ""));
+    if(errorDesc){
       clean();
-      return { error: params.get("error_description").replace(/\+/g, " ") };
+      const code = hashParams.get("error_code") || queryParams.get("error_code") || "";
+      const expired = code === "otp_expired" || /expired|invalid/i.test(errorDesc);
+      return { error: expired ? "El enlace ha caducado o ya se usó. Pide uno nuevo." : "No se pudo iniciar sesión con ese enlace. Pide uno nuevo." };
     }
+    const params = hashParams;
     try{
       const session = storeSession({
         access_token: params.get("access_token"),
@@ -221,7 +217,7 @@
   }
 
   window.InergoCloud = {
-    enabled, getSession, clearSession, signOut, sendCode, verifyCode, consumeUrlSession, isAdmin,
+    AUTH_KEY, enabled, getSession, clearSession, signOut, sendLink, consumeUrlSession, isAdmin,
     fetchCatalog, readCachedCatalog, saveCachedCatalog, createChallenge, updateChallenge
   };
 })();

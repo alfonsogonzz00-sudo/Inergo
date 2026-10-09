@@ -7,7 +7,7 @@ Ver `docs/CHANGELOG.md`.
 ## Hecho en v2.1.0
 
 - Proyecto Supabase `Inergo` (eu-west-1) con `public.challenges` (catálogo), `private.admin_emails` y `public.is_admin()`. RLS probada.
-- La app lee el catálogo con copia offline y tiene panel de administración con login por código.
+- La app lee el catálogo con copia offline y tiene panel de administración con acceso por enlace enviado al email.
 
 ## P1 — Usuarios reales (cuando la app se abra a la comunidad)
 

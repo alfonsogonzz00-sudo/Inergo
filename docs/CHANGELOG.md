@@ -1,5 +1,10 @@
 # Cambios
 
+## v2.1.3
+
+- **Ruleta de ~3 segundos** desde que pulsas PLAY hasta que aparece el reto.
+- **Acceso al catálogo con enlace por email**, sin código: funciona con las plantillas de serie de Supabase (el plan gratuito no permite editarlas). La pestaña donde lo pediste entra sola cuando abres el enlace en otra; si el enlace ha caducado, la app lo dice y deja pedir otro.
+
 ## v2.1.2
 
 - **La ruleta vuelve a verse siempre.** Con «Reducir movimiento» activado en el sistema (Mac, Windows, iPhone) la v2 se la saltaba; la versión original la mostraba. Es parte del producto, así que se muestra siempre.
@@ -13,7 +18,7 @@
 ## v2.1.0
 
 - **Catálogo de retos en Supabase.** Los retos ya no van escritos en el código: se cargan desde la base de datos al abrir la app y se guarda una copia para usarla sin conexión. Si el servidor no responde, la app usa la última copia o los 103 retos de serie.
-- **Panel de administración dentro de la app** (Ajustes → Administración): entrar con un código por email, publicar retos nuevos, editarlos y desactivarlos. Cada categoría conserva su mecánica (Experiencia a pendientes, Conocimiento en dos fases).
+- **Panel de administración dentro de la app** (Ajustes → Administración): entrar por email, publicar retos nuevos, editarlos y desactivarlos. Cada categoría conserva su mecánica (Experiencia a pendientes, Conocimiento en dos fases).
 - **Seguridad:** solo los emails autorizados y confirmados pueden modificar el catálogo; lo impone la base de datos (RLS), no la app.
 - Los retos desactivados en «Mis retos» funcionan también con los retos nuevos del catálogo.
 

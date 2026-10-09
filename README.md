@@ -18,7 +18,7 @@ Permite **saltar un reto ya revelado** sin completarlo (no suma XP ni racha). Pa
 
 Los retos que salen al tirar se gestionan **desde la propia app**, sin tocar código ni GitHub.
 
-- **Entrar:** Ajustes → *Administración → Catálogo de retos → Abrir* (la sección aparece en modo pruebas o con la sesión iniciada). Pon tu email, te llega un código de 6 cifras y entras.
+- **Entrar:** Ajustes → *Administración → Catálogo de retos → Abrir* (la sección aparece en modo pruebas o con la sesión iniciada). Pon tu email, te llega un enlace y, al abrirlo **en ese mismo navegador**, entras. Mejor desde el ordenador: en iPhone el enlace se abre en Safari, no en la app instalada.
 - **Añadir:** escribe el reto, elige categoría (y tiempo si es Espontánea o Reflexión) y *Publicar reto*. Sale al tirar en cuanto se publica.
 - **Editar / desactivar:** desde la lista. Desactivar no borra: el reto deja de salir y se puede reactivar.
 - **Cada categoría tiene su mecánica:** Espontánea y Reflexión con cronómetro, Experiencia va a Pendientes, Conocimiento investiga 10 min y habla 1 min. La base de datos no permite mezclarlas.
@@ -28,9 +28,10 @@ Los retos que salen al tirar se gestionan **desde la propia app**, sin tocar có
 
 ### Configuración de Supabase (una sola vez)
 
-1. **Authentication → Email Templates → Magic Link** y **Confirm signup**: añade `{{ .Token }}` al texto del email (por ejemplo `<p>Tu código: <strong>{{ .Token }}</strong></p>`). Sin esto, el email solo trae un enlace y no un código.
-2. **Authentication → URL Configuration:** *Site URL* `https://inergo.vercel.app` y en *Redirect URLs* añade `https://inergo.vercel.app/**`. Así también funciona el enlace del email.
-3. **Antes de abrir la app al público:** configura un SMTP propio (Authentication → SMTP; por ejemplo Resend). El servicio de email de serie de Supabase solo envía a los emails del equipo del proyecto y con muy pocos envíos por hora.
+Se usan las plantillas de email **de serie** de Supabase (no hace falta editarlas; en el plan gratuito no se puede).
+
+1. **Authentication → URL Configuration:** *Site URL* `https://inergo.vercel.app` y en *Redirect URLs* añade `https://inergo.vercel.app/**`. Sin esto, el enlace del email lleva a `localhost` y no funciona.
+2. **Antes de abrir la app al público:** configura un SMTP propio (Authentication → SMTP; por ejemplo Resend). El servicio de email de serie de Supabase solo envía a los emails del equipo del proyecto y con muy pocos envíos por hora.
 
 ### Base de datos
 

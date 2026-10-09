@@ -421,7 +421,7 @@
     const ITEM_H = $(".reel-viewport").getBoundingClientRect().height;
     // La ruleta es parte del producto: se muestra siempre (también con
     // "Reducir movimiento" activado, igual que en la versión original).
-    const REEL_LENGTH = 36; // items pintados en la tira
+    const REEL_LENGTH = 28; // items pintados en la tira
     const sequence = [];
     for(let i=0; i<REEL_LENGTH-1; i++){
       sequence.push(pool[Math.floor(Math.random()*pool.length)]);
@@ -442,9 +442,9 @@
     // centra exactamente el último elemento (el reto elegido) en la ventana.
     const finalOffset = -(ITEM_H * (sequence.length - 1));
 
-    // ~4 s desde que pulsas PLAY hasta que aparece el reto
-    // (0,16 s de estallido + 3,7 s de ruleta + 0,16 s de pausa).
-    const DURATION = 3700;
+    // ~3 s desde que pulsas PLAY hasta que aparece el reto
+    // (0,16 s de estallido + 2,7 s de ruleta + 0,16 s de pausa).
+    const DURATION = 2700;
     const startTime = performance.now();
     let lastTickIndex = -1;
 
@@ -1575,7 +1575,7 @@
 
   function showLoginStep(step){
     showBlock($("#admin-login-email"), step === "email");
-    showBlock($("#admin-login-code"), step === "code");
+    showBlock($("#admin-login-sent"), step === "sent");
   }
 
   async function renderAdmin(){
@@ -1583,7 +1583,7 @@
     const session = Cloud.getSession();
     if(!session){
       showAdminView("login");
-      showLoginStep(admin.email ? "code" : "email");
+      showLoginStep(admin.email ? "sent" : "email");
       if(admin.email) $("#admin-email-sent").textContent = admin.email;
       return;
     }
@@ -1773,34 +1773,37 @@
 
   function setupAdmin(){
     if(!cloudOn) return;
-    $("#admin-send-code").addEventListener("click", async () => {
-      const btn = $("#admin-send-code");
+    $("#admin-send-link").addEventListener("click", async () => {
+      const btn = $("#admin-send-link");
       setBusy(btn, true, "Enviando…");
       try{
-        admin.email = await Cloud.sendCode($("#admin-email").value);
+        admin.email = await Cloud.sendLink($("#admin-email").value);
         $("#admin-email-sent").textContent = admin.email;
-        showLoginStep("code");
-        $("#admin-code").value = "";
-        $("#admin-code").focus();
-        showToast("Código enviado. Mira tu email.");
+        showLoginStep("sent");
+        showToast("Enlace enviado. Mira tu email.");
       }catch(e){ showToast(e.message); }
       setBusy(btn, false);
     });
-    $("#admin-email").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("#admin-send-code").click(); } });
-    $("#admin-verify").addEventListener("click", async () => {
-      const btn = $("#admin-verify");
-      setBusy(btn, true, "Entrando…");
+    $("#admin-email").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("#admin-send-link").click(); } });
+    $("#admin-resend").addEventListener("click", async () => {
+      const btn = $("#admin-resend");
+      setBusy(btn, true, "Enviando…");
       try{
-        await Cloud.verifyCode(admin.email, $("#admin-code").value);
-        admin.isAdmin = null;
-        admin.email = null;
-        renderAdminEntry();
-        showToast("Sesión iniciada.");
-        setBusy(btn, false);
-        renderAdmin();
-      }catch(e){ setBusy(btn, false); showToast(e.message); }
+        await Cloud.sendLink(admin.email);
+        showToast("Enlace reenviado.");
+      }catch(e){ showToast(e.message); }
+      setBusy(btn, false);
     });
-    $("#admin-code").addEventListener("keydown", (e) => { if(e.key === "Enter"){ e.preventDefault(); $("#admin-verify").click(); } });
+    // El enlace suele abrirse en otra pestaña: cuando allí se inicia sesión,
+    // esta pestaña se entera y entra sola.
+    window.addEventListener("storage", (e) => {
+      if(e.key !== Cloud.AUTH_KEY) return;
+      admin.isAdmin = null;
+      admin.email = null;
+      renderAdminEntry();
+      if(state.screen === "admin") renderAdmin();
+      if(e.newValue) showToast("Sesión iniciada.");
+    });
     $("#admin-change-email").addEventListener("click", () => { admin.email = null; showLoginStep("email"); $("#admin-email").focus(); });
     $all(".admin-signout").forEach(b => b.addEventListener("click", async () => {
       await Cloud.signOut();
@@ -1822,10 +1825,10 @@
     if(!cloudOn) return false;
     const r = Cloud.consumeUrlSession();
     if(!r) return false;
-    if(r.error){ showToast(r.error); return false; }
     // Quien entra como administrador no necesita la introducción.
     if(!data.onboardingDone){ data.onboardingDone = true; saveData(); }
-    showToast("Sesión iniciada.");
+    // Con error (enlace caducado) también se va al catálogo, para pedir otro.
+    showToast(r.error || "Sesión iniciada.");
     return true;
   }
 
@@ -1853,6 +1856,14 @@
     renderTestModeUI();
 
     const fromLoginLink = consumeLoginRedirect();
+    // Por si el enlace se abre con la app ya cargada en esa misma pestaña.
+    window.addEventListener("hashchange", () => {
+      if(!consumeLoginRedirect()) return;
+      admin.isAdmin = null;
+      admin.email = null;
+      renderAdminEntry();
+      goTo("admin");
+    });
     const deepLink = fromLoginLink ? "admin" : initialScreenFromUrl();
     if(deepLink){
       goTo(deepLink, { silentFocus:true });

@@ -17,7 +17,7 @@
 })(typeof self !== "undefined" ? self : this, function(){
   "use strict";
 
-  const APP_VERSION = "2.1.2";
+  const APP_VERSION = "2.1.3";
   const STORAGE_KEY = "inergo_data_v1"; // NO cambiar: contiene el progreso de los usuarios
   const SCHEMA_VERSION = 2;
 
