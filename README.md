@@ -13,6 +13,7 @@ Permite **saltar un reto ya revelado** sin completarlo (no suma XP ni racha). Pa
 - **Activar:** abre `inergo.vercel.app/?test=1`, o en la app instalada ve a **Ajustes y toca 5 veces el texto de la versión** (abajo del todo).
 - **Se nota:** en la home aparece la etiqueta negra «MODO PRUEBAS» y, durante un reto, el enlace «Saltar reto · modo pruebas».
 - **Desactivar:** interruptor «Modo pruebas» en Ajustes, `?test=0` o otros 5 toques en la versión. **Desactívalo antes de grabar.**
+- **Reto fijo:** en modo pruebas, PLAY en **Experiencia** da siempre «Practica un deporte que no suelas hacer… y haz un vlog». Para cambiarlo o quitarlo, edita `TEST_PINNED` en `inergo-core.js`.
 
 ## Catálogo de retos (Supabase)
 

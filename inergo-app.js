@@ -631,6 +631,8 @@
       points: challenge.points,
       savedAt: Date.now()
     };
+    // Nunca dos veces el mismo reto en pendientes (en modo pruebas puede volver a salir).
+    data.pendingChallenges = data.pendingChallenges.filter(p => p.challengeId !== challenge.id);
     data.pendingChallenges.push(entry);
     data.activeChallenge = null; // queda guardado en pendientes: el compromiso sigue ahí
     saveData();

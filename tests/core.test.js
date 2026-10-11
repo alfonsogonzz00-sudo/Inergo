@@ -303,3 +303,44 @@ test("panel: prepara filas válidas para la base de datos", () => {
   assert.match(id, /^[a-z0-9-]{1,80}$/);
   assert.ok(C.catalogRowToChallenge(Object.assign({ id, active:true }, t)));
 });
+
+/* ---------- Modo pruebas: reto fijo ---------- */
+test("modo pruebas: Experiencia da siempre el reto fijo", () => {
+  C.setCatalog(null);
+  const d = C.defaultData();
+  d.testMode = true;
+  d.recentIds = ["experiencia-011"];
+  d.pendingChallenges = [{ activeId:"pending-1", challengeId:"experiencia-011", text:"x", category:"experiencia", points:50, savedAt:1 }];
+  for(let i = 0; i < 20; i++){
+    const c = C.pickChallenge(d, "experiencia");
+    assert.equal(c.id, "experiencia-011");
+    assert.equal(c.durationType, "pending");
+    assert.match(c.text, /deporte que no suelas hacer/);
+  }
+});
+
+test("modo pruebas: el resto de categorías y TODOS sortean normal", () => {
+  const d = C.defaultData();
+  d.testMode = true;
+  const seen = new Set();
+  for(let i = 0; i < 60; i++){
+    assert.equal(C.pickChallenge(d, "reflexion").category, "reflexion");
+    seen.add(C.pickChallenge(d, "todos").id);
+  }
+  assert.ok(seen.size > 5);
+});
+
+test("sin modo pruebas: Experiencia sortea normal", () => {
+  const d = C.defaultData();
+  const seen = new Set();
+  for(let i = 0; i < 60; i++) seen.add(C.pickChallenge(d, "experiencia").id);
+  assert.ok(seen.size > 3);
+});
+
+test("modo pruebas: usa la versión del catálogo si existe", () => {
+  C.setCatalog(C.normalizeCatalog([{ id:"experiencia-011", text:"Texto editado desde el panel", category:"experiencia",
+    duration_type:"pending", duration_seconds:null, research_seconds:null, talk_seconds:null, points:50, active:true, sort_order:1 }]));
+  const d = C.defaultData(); d.testMode = true;
+  assert.equal(C.pickChallenge(d, "experiencia").text, "Texto editado desde el panel");
+  C.setCatalog(null);
+});

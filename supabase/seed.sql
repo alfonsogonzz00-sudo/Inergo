@@ -106,3 +106,8 @@ insert into public.challenges (id, text, category, duration_type, duration_secon
   ('conocimiento-059', 'Investiga en qué consistió el Cisma de 1054 entre las Iglesias católica y ortodoxa y prepárate para explicarlo.', 'conocimiento', 'research', null, 600, 60, 20, true, 1020),
   ('conocimiento-060', 'Investiga en qué consistió la Guerra de las Comunidades de Castilla y prepárate para explicarlo.', 'conocimiento', 'research', null, 600, 60, 20, true, 1030)
 on conflict (id) do nothing;
+
+-- Retos añadidos después del lanzamiento del catálogo
+insert into public.challenges (id, text, category, duration_type, points, active, sort_order) values
+  ('experiencia-011', 'Practica un deporte que no suelas hacer en un lugar/zona que no sea habitual para ti y haz un vlog.', 'experiencia', 'pending', 50, true, 235)
+on conflict (id) do nothing;

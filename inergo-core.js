@@ -17,7 +17,7 @@
 })(typeof self !== "undefined" ? self : this, function(){
   "use strict";
 
-  const APP_VERSION = "2.1.3";
+  const APP_VERSION = "2.1.4";
   const STORAGE_KEY = "inergo_data_v1"; // NO cambiar: contiene el progreso de los usuarios
   const SCHEMA_VERSION = 2;
 
@@ -516,7 +516,26 @@
     return allActiveChallenges(data).filter(c => categoryId === "todos" || c.category === categoryId);
   }
 
+  /* Modo pruebas: reto fijo por categoría, para preparar grabaciones.
+     Con el modo pruebas activado, tirar en esa categoría da siempre este reto
+     (aunque esté en pendientes o haya salido hace poco). Se usa la versión del
+     catálogo de Supabase si existe; si no, esta copia. Para quitarlo o cambiarlo,
+     edita esta lista. */
+  const TEST_PINNED = {
+    experiencia: mkP("experiencia-011", "Practica un deporte que no suelas hacer en un lugar/zona que no sea habitual para ti y haz un vlog.", "experiencia", 50)
+  };
+
+  function pinnedTestChallenge(categoryId){
+    const pinned = TEST_PINNED[categoryId];
+    if(!pinned) return null;
+    return catalog.find(c => c.id === pinned.id) || pinned;
+  }
+
   function pickChallenge(data, categoryId, rng){
+    if(data.testMode){
+      const pinned = pinnedTestChallenge(categoryId);
+      if(pinned) return pinned;
+    }
     const random = rng || Math.random;
     let pool = poolFor(data, categoryId);
     // Un reto de Experiencia ya apuntado como pendiente no puede volver a tocar
@@ -619,6 +638,7 @@
     createActive, startTimedPhase, setPhase, remainingSeconds, resolveActive, TIMED_PHASES,
     buildBackup, parseBackup, safeId,
     CATEGORY_TYPE, CATEGORY_POINTS,
-    catalogRowToChallenge, normalizeCatalog, challengeToCatalogRow, newCatalogId, setCatalog, getCatalog
+    catalogRowToChallenge, normalizeCatalog, challengeToCatalogRow, newCatalogId, setCatalog, getCatalog,
+    TEST_PINNED, pinnedTestChallenge
   };
 });

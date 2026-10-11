@@ -1,5 +1,11 @@
 # Cambios
 
+## v2.1.4
+
+- **Nuevo reto de Experiencia:** «Practica un deporte que no suelas hacer en un lugar/zona que no sea habitual para ti y haz un vlog.» (`experiencia-011`, en el catálogo de Supabase).
+- **Modo pruebas con reto fijo:** con el modo pruebas activado, PLAY en Experiencia da siempre ese reto (aunque esté en pendientes o haya salido hace poco). El resto de categorías, TODOS y el modo normal sortean como siempre. Se configura en `TEST_PINNED` (`inergo-core.js`).
+- Un mismo reto nunca aparece dos veces en Pendientes.
+
 ## v2.1.3
 
 - **Ruleta de ~3 segundos** desde que pulsas PLAY hasta que aparece el reto.
