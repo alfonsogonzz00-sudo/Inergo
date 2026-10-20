@@ -1,5 +1,11 @@
 # Cambios
 
+## v2.1.6
+
+- **Revisión de seguridad del catálogo** (aprobada el 20 oct 2026): sin autostop (`experiencia-003`), sin grabar a desconocidos sin permiso (`espontanea-001`), confesión más ligera (`espontanea-005`), abrazo con «si dice que no, lo aceptas» (`espontanea-003`, riesgo medio) y `espontanea-013` retirado (lo cubre Conocimiento). Copia de serie: 102 retos.
+- **Línea de seguridad** bajo cada reto revelado: «Si grabas a alguien, pide permiso. Si algo te pone en riesgo, no lo hagas.»
+- Los mismos cambios para el catálogo de Supabase están al final de `supabase/seed.sql`.
+
 ## v2.1.5
 
 - **Modo pruebas solo para administradores.** `?test=1` y los 5 toques en la versión ya no activan el modo pruebas: solo muestran la entrada de Administración. El interruptor aparece cuando la base de datos confirma que la sesión es de un administrador. Quien tuviera el modo pruebas guardado de antes lo pierde sin hacer nada.

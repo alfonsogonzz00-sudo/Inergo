@@ -2,11 +2,11 @@
 -- historiales, pendientes y retos desactivados de los usuarios).
 -- Se puede ejecutar varias veces: no duplica ni pisa cambios.
 insert into public.challenges (id, text, category, duration_type, duration_seconds, research_seconds, talk_seconds, points, active, sort_order) values
-  ('espontanea-001', 'Sal a la calle ahora mismo y hazle un cumplido sincero y específico a 3 desconocidos, grabando su reacción.', 'espontanea', 'timer', 900, null, null, 20, true, 10),
+  ('espontanea-001', 'Sal a la calle ahora mismo y hazle un cumplido sincero y específico a 3 desconocidos. Grábate a ti; a ellos, solo si te dan permiso.', 'espontanea', 'timer', 900, null, null, 20, true, 10),
   ('espontanea-002', 'Entra en una tienda y pide un descuento sin ningún motivo real, solo porque sí.', 'espontanea', 'timer', 300, null, null, 20, true, 20),
-  ('espontanea-003', 'Pide un abrazo a un desconocido por la calle, tras hablar con él.', 'espontanea', 'timer', 420, null, null, 20, true, 30),
+  ('espontanea-003', 'Pide un abrazo a un desconocido por la calle, tras hablar con él. Si dice que no, lo aceptas y lo cuentas.', 'espontanea', 'timer', 420, null, null, 20, true, 30),
   ('espontanea-004', 'Llama ahora mismo a alguien con quien no hablas hace tiempo y dile en voz alta por qué te importó.', 'espontanea', 'timer', 600, null, null, 20, true, 40),
-  ('espontanea-005', 'Mirando fijamente a cámara, confiesa algo que te avergüenza y que nunca has contado a nadie.', 'espontanea', 'timer', 300, null, null, 20, true, 50),
+  ('espontanea-005', 'Mirando fijamente a cámara, confiesa algo pequeño que te dé vergüenza admitir.', 'espontanea', 'timer', 300, null, null, 20, true, 50),
   ('espontanea-006', 'Pregunta a un desconocido cuál es su mayor arrepentimiento en la vida.', 'espontanea', 'timer', 480, null, null, 20, true, 60),
   ('espontanea-007', 'Entra en una tienda de ropa que nunca pisarías, pruébate algo y pide la opinión sincera a un desconocido dentro del probador.', 'espontanea', 'timer', 900, null, null, 20, true, 70),
   ('espontanea-008', 'Pide en un bar o restaurante que te recomienden algo "para impresionar a alguien" y cuéntales por qué lo necesitas.', 'espontanea', 'timer', 600, null, null, 20, true, 80),
@@ -17,7 +17,7 @@ insert into public.challenges (id, text, category, duration_type, duration_secon
   ('espontanea-013', 'Aprende qué es un suceso, un concepto científico o algo muy nicho de una disciplina que no domines, y explícalo sin muletillas durante 1 minuto. Tienes 20 minutos para investigarlo y grabarte explicándolo.', 'espontanea', 'timer', 1200, null, null, 20, true, 130),
   ('experiencia-001', 'Ve a un pueblo o barrio a menos de 15 minutos de donde vives, cena allí completamente solo y date una vuelta.', 'experiencia', 'pending', null, null, null, 50, true, 140),
   ('experiencia-002', 'Ve solo al cine a la sesión con el horario más raro que encuentres y cuenta cómo te sentiste al salir.', 'experiencia', 'pending', null, null, null, 50, true, 150),
-  ('experiencia-003', 'Haz autostop real o pide ayuda a un desconocido para resolver algo que necesitas hoy.', 'experiencia', 'pending', null, null, null, 50, true, 160),
+  ('experiencia-003', 'Pide ayuda a un desconocido para resolver algo que de verdad necesitas hoy y cuenta qué pasó.', 'experiencia', 'pending', null, null, null, 50, true, 160),
   ('experiencia-004', 'Preséntate en persona (sin cita previa) en un sitio donde te gustaría trabajar o colaborar, y pide hablar con alguien.', 'experiencia', 'pending', null, null, null, 50, true, 170),
   ('experiencia-005', 'Sal de tu ciudad un día entero sin planear nada: elige destino la misma mañana.', 'experiencia', 'pending', null, null, null, 50, true, 180),
   ('experiencia-006', 'Cuenta tu mayor miedo en voz alta a un grupo de amigos reunidos, sin quitarle importancia después.', 'experiencia', 'pending', null, null, null, 50, true, 190),
@@ -111,3 +111,11 @@ on conflict (id) do nothing;
 insert into public.challenges (id, text, category, duration_type, points, active, sort_order) values
   ('experiencia-011', 'Practica un deporte que no suelas hacer en un lugar/zona que no sea habitual para ti y haz un vlog.', 'experiencia', 'pending', 50, true, 235)
 on conflict (id) do nothing;
+
+-- v2.1.6: revisión de seguridad (20 oct 2026). El seed no pisa filas existentes,
+-- así que los cambios de texto se aplican también aquí de forma explícita.
+update public.challenges set text = 'Sal a la calle ahora mismo y hazle un cumplido sincero y específico a 3 desconocidos. Grábate a ti; a ellos, solo si te dan permiso.' where id = 'espontanea-001';
+update public.challenges set text = 'Pide un abrazo a un desconocido por la calle, tras hablar con él. Si dice que no, lo aceptas y lo cuentas.', risk_level = 'medio' where id = 'espontanea-003';
+update public.challenges set text = 'Mirando fijamente a cámara, confiesa algo pequeño que te dé vergüenza admitir.' where id = 'espontanea-005';
+update public.challenges set active = false where id = 'espontanea-013';
+update public.challenges set text = 'Pide ayuda a un desconocido para resolver algo que de verdad necesitas hoy y cuenta qué pasó.' where id = 'experiencia-003';

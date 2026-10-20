@@ -17,7 +17,7 @@
 })(typeof self !== "undefined" ? self : this, function(){
   "use strict";
 
-  const APP_VERSION = "2.1.5";
+  const APP_VERSION = "2.1.6";
   const STORAGE_KEY = "inergo_data_v1"; // NO cambiar: contiene el progreso de los usuarios
   const SCHEMA_VERSION = 2;
 
@@ -55,11 +55,11 @@
 
   const DEFAULT_CHALLENGES = [
     // ESPONTÁNEA — se hace ahora mismo, unos 30 min como mucho.
-    mk("espontanea-001","Sal a la calle ahora mismo y hazle un cumplido sincero y específico a 3 desconocidos, grabando su reacción.","espontanea",900,20),
+    mk("espontanea-001","Sal a la calle ahora mismo y hazle un cumplido sincero y específico a 3 desconocidos. Grábate a ti; a ellos, solo si te dan permiso.","espontanea",900,20),
     mk("espontanea-002","Entra en una tienda y pide un descuento sin ningún motivo real, solo porque sí.","espontanea",300,20),
-    mk("espontanea-003","Pide un abrazo a un desconocido por la calle, tras hablar con él.","espontanea",420,20),
+    mk("espontanea-003","Pide un abrazo a un desconocido por la calle, tras hablar con él. Si dice que no, lo aceptas y lo cuentas.","espontanea",420,20),
     mk("espontanea-004","Llama ahora mismo a alguien con quien no hablas hace tiempo y dile en voz alta por qué te importó.","espontanea",600,20),
-    mk("espontanea-005","Mirando fijamente a cámara, confiesa algo que te avergüenza y que nunca has contado a nadie.","espontanea",300,20),
+    mk("espontanea-005","Mirando fijamente a cámara, confiesa algo pequeño que te dé vergüenza admitir.","espontanea",300,20),
     mk("espontanea-006","Pregunta a un desconocido cuál es su mayor arrepentimiento en la vida.","espontanea",480,20),
     mk("espontanea-007","Entra en una tienda de ropa que nunca pisarías, pruébate algo y pide la opinión sincera a un desconocido dentro del probador.","espontanea",900,20),
     mk("espontanea-008","Pide en un bar o restaurante que te recomienden algo \"para impresionar a alguien\" y cuéntales por qué lo necesitas.","espontanea",600,20),
@@ -67,14 +67,13 @@
     mk("espontanea-010","Ve a la sección de perfumería o cosmética de una tienda y pide a un dependiente que te maquille o te ponga colonia mientras la gente mira.","espontanea",900,20),
     mk("espontanea-011","Pide a alguien random que pasa por la calle que te dé un consejo de vida en 30 segundos.","espontanea",300,20),
     mk("espontanea-012","Pide a un grupo de desconocidos que se echen una foto contigo sin dar ninguna razón.","espontanea",480,20),
-    mk("espontanea-013","Aprende qué es un suceso, un concepto científico o algo muy nicho de una disciplina que no domines, y explícalo sin muletillas durante 1 minuto. Tienes 20 minutos para investigarlo y grabarte explicándolo.","espontanea",1200,20),
 
     // EXPERIENCIA — sin cronómetro ni fecha límite: el "cuándo" va escrito en
     // el propio texto del reto ("mañana temprano", "el próximo fin de semana"...).
     // Se apunta en "Retos pendientes" hasta que lo marques como hecho.
     mkP("experiencia-001","Ve a un pueblo o barrio a menos de 15 minutos de donde vives, cena allí completamente solo y date una vuelta.","experiencia",50),
     mkP("experiencia-002","Ve solo al cine a la sesión con el horario más raro que encuentres y cuenta cómo te sentiste al salir.","experiencia",50),
-    mkP("experiencia-003","Haz autostop real o pide ayuda a un desconocido para resolver algo que necesitas hoy.","experiencia",50),
+    mkP("experiencia-003","Pide ayuda a un desconocido para resolver algo que de verdad necesitas hoy y cuenta qué pasó.","experiencia",50),
     mkP("experiencia-004","Preséntate en persona (sin cita previa) en un sitio donde te gustaría trabajar o colaborar, y pide hablar con alguien.","experiencia",50),
     mkP("experiencia-005","Sal de tu ciudad un día entero sin planear nada: elige destino la misma mañana.","experiencia",50),
     mkP("experiencia-006","Cuenta tu mayor miedo en voz alta a un grupo de amigos reunidos, sin quitarle importancia después.","experiencia",50),
@@ -181,7 +180,7 @@
     mkK("conocimiento-060","Investiga en qué consistió la Guerra de las Comunidades de Castilla y prepárate para explicarlo.")
   ];
 
-  /* El catálogo vivo viene de Supabase (ver js/inergo-cloud.js). Estos 103
+  /* El catálogo vivo viene de Supabase (ver js/inergo-cloud.js). Estos 102
      retos son la copia de serie: se usan la primera vez sin conexión o si
      el servidor no responde. */
   let catalog = DEFAULT_CHALLENGES;

@@ -24,7 +24,7 @@ Los retos que salen al tirar se gestionan **desde la propia app**, sin tocar có
 - **Añadir:** escribe el reto, elige categoría (y tiempo si es Espontánea o Reflexión) y *Publicar reto*. Sale al tirar en cuanto se publica.
 - **Editar / desactivar:** desde la lista. Desactivar no borra: el reto deja de salir y se puede reactivar.
 - **Cada categoría tiene su mecánica:** Espontánea y Reflexión con cronómetro, Experiencia va a Pendientes, Conocimiento investiga 10 min y habla 1 min. La base de datos no permite mezclarlas.
-- **Sin conexión:** la app usa la última lista descargada; si nunca ha conectado, los 103 retos de serie (`inergo-core.js`).
+- **Sin conexión:** la app usa la última lista descargada; si nunca ha conectado, los 102 retos de serie (`inergo-core.js`).
 - **Quién puede editar:** solo los emails de la tabla privada `private.admin_emails`, y solo con el email confirmado. Para añadir a alguien, en Supabase → SQL Editor:
   `insert into private.admin_emails (email) values ('otra@persona.com');`
 
