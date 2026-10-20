@@ -378,7 +378,7 @@
       resumeActive();
       return;
     }
-    const chosen = Core.pickChallenge(data, data.selectedCategory);
+    const chosen = Core.pickChallenge(drawView(), data.selectedCategory);
     if(!chosen){
       showToast("No hay retos en esta categoría todavía.");
       return;
@@ -487,15 +487,19 @@
   }
 
   /* ---------- MODO PRUEBAS ----------
-     Solo para testear la app: permite abandonar un reto revelado sin
-     completarlo (no suma XP ni racha). Se activa con ?test=1 en la URL o
-     tocando 5 veces la versión en Ajustes; se desactiva igual o desde Ajustes. */
+     Solo para administradores: permite abandonar un reto revelado sin
+     completarlo (no suma XP ni racha). ?test=1 o 5 toques en la versión
+     solo muestran la entrada de Administración; el modo pruebas se activa
+     cuando la base de datos confirma que la sesión es de un administrador. */
+  let testAllowed = false;   // confirmado por is_admin() en esta sesión
+  let adminDoor = false;     // la entrada de Administración se ha desvelado (solo en memoria)
+  function testActive(){ return !!(data.testMode && testAllowed); }
   function renderSkipButton(){
     const skip = $("#skip-btn");
-    skip.classList.toggle("hidden", !(data.testMode && data.activeChallenge));
+    skip.classList.toggle("hidden", !(testActive() && data.activeChallenge));
   }
   $("#skip-btn").addEventListener("click", () => {
-    if(!data.testMode || !data.activeChallenge) return;
+    if(!testActive() || !data.activeChallenge) return;
     stopCountdown();
     data.activeChallenge = null;
     saveData();
@@ -503,15 +507,21 @@
     goTo("home");
   });
   function setTestMode(on, { silent } = {}){
+    if(on && !testAllowed){
+      adminDoor = true;
+      renderTestModeUI();
+      if(!silent) showToast("Modo pruebas solo para administradores: entra en Ajustes → Administración.");
+      return;
+    }
     data.testMode = !!on;
     saveData();
     renderTestModeUI();
     if(!silent) showToast(on ? "Modo pruebas activado." : "Modo pruebas desactivado.");
   }
   function renderTestModeUI(){
-    $("#test-badge").classList.toggle("hidden", !data.testMode);
-    $("#testmode-row").classList.toggle("hidden", !data.testMode);
-    $("#testmode-toggle").checked = !!data.testMode;
+    $("#test-badge").classList.toggle("hidden", !testActive());
+    $("#testmode-row").classList.toggle("hidden", !testAllowed);
+    $("#testmode-toggle").checked = testActive();
     renderSkipButton();
     renderAdminEntry();
   }
@@ -520,7 +530,8 @@
       const url = new URL(window.location.href);
       const t = url.searchParams.get("test");
       if(t !== "1" && t !== "0") return;
-      setTestMode(t === "1");
+      if(t === "1") adminDoor = true;
+      setTestMode(t === "1", { silent:true });
       url.searchParams.delete("test");
       window.history.replaceState(null, "", url.pathname + url.search + url.hash);
     }catch(e){}
@@ -1156,7 +1167,8 @@
       versionTapTimer = setTimeout(() => { versionTaps = 0; }, 2500);
       if(versionTaps >= 5){
         versionTaps = 0;
-        setTestMode(!data.testMode);
+        if(!testAllowed){ adminDoor = true; renderTestModeUI(); showToast("Administración desbloqueada en Ajustes."); }
+        else setTestMode(!data.testMode);
       }
     });
     $("#replay-onboarding-btn").addEventListener("click", () => openOnboarding());
@@ -1413,7 +1425,7 @@
           resumeActive();
           return;
         }
-        const chosen = Core.pickChallenge(data, "todos");
+        const chosen = Core.pickChallenge(drawView(), "todos");
         if(!chosen) return;
         longPressFired = true;
         vibrate([20, 40, 20, 40, 30]);
@@ -1564,8 +1576,23 @@
     btn.classList.toggle("is-busy", busy);
   }
 
+  // El sorteo solo ve el modo pruebas si un administrador lo tiene activo.
+  function drawView(){ return Object.assign({}, data, { testMode: testActive() }); }
+
+  // Comprueba en la base de datos si la sesión es de administrador y, si lo
+  // es, habilita el modo pruebas. Sin sesión o sin permiso, queda apagado.
+  async function refreshAdminRights(){
+    let ok = false;
+    if(cloudOn && Cloud.getSession()){
+      try{ ok = await Cloud.isAdmin(); }catch(e){ ok = false; }
+    }
+    testAllowed = ok;
+    if(ok) admin.isAdmin = true;
+    renderTestModeUI();
+  }
+
   function renderAdminEntry(){
-    const show = cloudOn && (data.testMode || !!Cloud.getSession());
+    const show = cloudOn && (adminDoor || !!Cloud.getSession());
     $("#admin-section").classList.toggle("hidden", !show);
   }
 
@@ -1594,6 +1621,7 @@
       showAdminView(null);
       try{
         admin.isAdmin = await Cloud.isAdmin();
+        if(admin.isAdmin !== testAllowed){ testAllowed = !!admin.isAdmin; renderTestModeUI(); }
       }catch(e){
         showToast(e.message);
         if(!Cloud.getSession()){ admin.isAdmin = null; renderAdmin(); }
@@ -1803,6 +1831,7 @@
       admin.isAdmin = null;
       admin.email = null;
       renderAdminEntry();
+      refreshAdminRights();
       if(state.screen === "admin") renderAdmin();
       if(e.newValue) showToast("Sesión iniciada.");
     });
@@ -1810,6 +1839,7 @@
     $all(".admin-signout").forEach(b => b.addEventListener("click", async () => {
       await Cloud.signOut();
       admin.isAdmin = null;
+      testAllowed = false;
       admin.rows = [];
       resetAdminForm();
       renderAdminEntry();
@@ -1856,6 +1886,7 @@
     applyTestModeFromUrl();
     setupAdmin();
     renderTestModeUI();
+    refreshAdminRights();
 
     const fromLoginLink = consumeLoginRedirect();
     // Por si el enlace se abre con la app ya cargada en esa misma pestaña.
@@ -1864,6 +1895,7 @@
       admin.isAdmin = null;
       admin.email = null;
       renderAdminEntry();
+      refreshAdminRights();
       goTo("admin");
     });
     const deepLink = fromLoginLink ? "admin" : initialScreenFromUrl();

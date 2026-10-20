@@ -14,13 +14,13 @@ function fresh(){ return C.defaultData(); }
 // Generador pseudoaleatorio fijo para que los sorteos sean reproducibles.
 function seq(...values){ let i = 0; return () => values[i++ % values.length]; }
 
-test("el catálogo predeterminado se conserva íntegro (103 retos)", () => {
+test("el catálogo predeterminado se conserva íntegro (102 retos)", () => {
   const by = {};
   C.DEFAULT_CHALLENGES.forEach(c => { by[c.category] = (by[c.category] || 0) + 1; });
-  assert.equal(C.DEFAULT_CHALLENGES.length, 103);
-  assert.deepEqual(by, { espontanea:13, experiencia:10, reflexion:20, conocimiento:60 });
+  assert.equal(C.DEFAULT_CHALLENGES.length, 102);
+  assert.deepEqual(by, { espontanea:12, experiencia:10, reflexion:20, conocimiento:60 });
   const ids = new Set(C.DEFAULT_CHALLENGES.map(c => c.id));
-  assert.equal(ids.size, 103, "ids únicos");
+  assert.equal(ids.size, 102, "ids únicos");
 });
 
 test("XP fijos por categoría", () => {
@@ -284,8 +284,8 @@ test("catálogo: el sorteo usa el catálogo activo y vuelve al de serie si se va
   assert.equal(C.pickChallenge(d, "todos").id, "espontanea-zz");
   assert.equal(C.poolFor(d, "reflexion").length, 0);
   C.setCatalog(null);
-  assert.equal(C.getCatalog().length, 103);
-  assert.equal(C.poolFor(d, "todos").length, 103);
+  assert.equal(C.getCatalog().length, 102);
+  assert.equal(C.poolFor(d, "todos").length, 102);
 });
 
 test("panel: prepara filas válidas para la base de datos", () => {
@@ -343,4 +343,11 @@ test("modo pruebas: usa la versión del catálogo si existe", () => {
   const d = C.defaultData(); d.testMode = true;
   assert.equal(C.pickChallenge(d, "experiencia").text, "Texto editado desde el panel");
   C.setCatalog(null);
+});
+
+test("revisión de seguridad v2.1.6: sin autostop ni grabar a terceros sin permiso", () => {
+  const texts = C.DEFAULT_CHALLENGES.map(c => c.text.toLowerCase());
+  assert.ok(!texts.some(t => t.includes("autostop")), "sin autostop");
+  assert.ok(!texts.some(t => t.includes("grabando su reacción")), "sin grabar a terceros sin permiso");
+  assert.ok(!C.DEFAULT_CHALLENGES.some(c => c.id === "espontanea-013"), "espontanea-013 retirado");
 });

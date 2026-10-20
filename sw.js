@@ -8,7 +8,7 @@
    · Al publicar una versión nueva, sube VERSION aquí y el ?v= en
      inergo.html (ver README → "Publicar una versión nueva").
 ========================================================= */
-const VERSION = "2.1.4";
+const VERSION = "2.1.6";
 const CACHE_NAME = "inergo-" + VERSION;
 const HTML_FALLBACK = "./inergo.html";
 
@@ -108,6 +108,8 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   // Solo gestionamos lo nuestro; cualquier servicio externo futuro va directo a la red.
   if(url.origin !== self.location.origin) return;
+  // La analítica de Vercel nunca pasa por la caché.
+  if(url.pathname.startsWith("/_vercel/")) return;
 
   if(request.mode === "navigate"){
     event.respondWith(networkFirstHTML(request));

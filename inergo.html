@@ -40,11 +40,13 @@
 <!-- Fuentes y estilos propios (sin dependencias externas: funciona sin conexión) -->
 <link rel="preload" href="manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="inergo.css?v=2.1.4">
-<script src="inergo-config.js?v=2.1.4" defer></script>
-<script src="inergo-core.js?v=2.1.4" defer></script>
-<script src="inergo-cloud.js?v=2.1.4" defer></script>
-<script src="inergo-app.js?v=2.1.4" defer></script>
+<link rel="stylesheet" href="inergo.css?v=2.1.6">
+<script src="inergo-config.js?v=2.1.6" defer></script>
+<script src="inergo-core.js?v=2.1.6" defer></script>
+<script src="inergo-cloud.js?v=2.1.6" defer></script>
+<script src="inergo-app.js?v=2.1.6" defer></script>
+<!-- Vercel Web Analytics: visitas sin cookies (se activa en el panel de Vercel; si no está activo, no hace nada) -->
+<script src="/_vercel/insights/script.js" defer></script>
 </head>
 <body>
 
@@ -204,6 +206,7 @@
             <span id="challenge-meta"></span>
             <span id="challenge-duration-label"></span>
           </div>
+          <p id="safety-line" class="font-num text-[11px] opacity-75 shrink-0">Si grabas a alguien, pide permiso. Si algo te pone en riesgo, no lo hagas.</p>
         </div>
 
         <div id="timer-display" class="hidden shrink-0 flex flex-col items-center gap-3">
