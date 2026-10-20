@@ -373,11 +373,62 @@
     }, 160);
   }
 
+  /* ---------- Sorteo en el servidor (v2.2) ----------
+     Con conexión, el reto lo elige y lo guarda la base de datos: si ya tienes
+     uno abierto (en este u otro dispositivo), te devuelve ese. Sin conexión o
+     si el servidor no responde, se sortea en el móvil como antes. */
+  const SERVER_DRAW_TIMEOUT = 6000;
+  function serverDrawsOn(){ return cloudOn && navigator.onLine !== false; }
+
+  async function serverDraw(category){
+    try{
+      await Cloud.flushOutbox().catch(() => {});
+      const row = await Promise.race([
+        Cloud.rpc("draw_challenge", { p_category: category }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), SERVER_DRAW_TIMEOUT))
+      ]);
+      return Core.challengeFromDraw(Array.isArray(row) ? row[0] : row);
+    }catch(e){
+      return null;
+    }
+  }
+
+  // PLAY con el servidor: la ruleta arranca al instante y el reto real se
+  // coloca en la última casilla en cuanto llega (normalmente en < 1 s).
+  function launchServerDraw(category, { surprise } = {}){
+    if(state.drawing) return;
+    state.drawing = true;
+    Sound.clickPlay();
+    vibrate(surprise ? [20, 40, 20, 40, 30] : 15);
+    retrigger($("#play-burst"), "burst-active");
+    const result = serverDraw(category).then((r) => {
+      if(r && (r.status === "revealed" || r.status === "started")) return r;
+      // Sin servidor: sorteo local, como siempre.
+      const chosen = Core.pickChallenge(drawView(), category);
+      return chosen ? { challenge: chosen, drawId: null, local: true } : null;
+    }).then((r) => {
+      // El compromiso se guarda en cuanto se conoce el reto, aunque hayas
+      // salido de la pantalla durante la ruleta.
+      if(r && !data.activeChallenge){
+        data.activeChallenge = Core.createActive(r.challenge, undefined, r.drawId);
+        saveData();
+      }
+      state.drawing = false;
+      if(state.screen === "home") renderPlayButton();
+      return r;
+    });
+    setTimeout(() => {
+      goTo("play");
+      startSpin(null, { result });
+    }, 160);
+  }
+
   $("#play-btn").addEventListener("click", () => {
     if(data.activeChallenge){
       resumeActive();
       return;
     }
+    if(serverDrawsOn()){ launchServerDraw(data.selectedCategory); return; }
     const chosen = Core.pickChallenge(drawView(), data.selectedCategory);
     if(!chosen){
       showToast("No hay retos en esta categoría todavía.");
@@ -399,7 +450,7 @@
     }
   }
 
-  function startSpin(finalChallenge){
+  function startSpin(finalChallenge, pending){
     $("#spin-heading-text").textContent = SPIN_PHRASE;
 
     const phraseRow = $("#phrase-row");
@@ -411,7 +462,11 @@
     $("#reveal-wrap").classList.remove("flex");
 
     let pool = Core.poolFor(data, data.selectedCategory);
-    if(pool.length === 0) pool = [finalChallenge];
+    if(pool.length === 0) pool = Core.poolFor(data, "todos");
+    if(pool.length === 0 && finalChallenge) pool = [finalChallenge];
+    // Con sorteo en el servidor, la última casilla se rellena cuando llega el reto.
+    let resolved = finalChallenge ? { challenge: finalChallenge } : null;
+    let arrived = !!finalChallenge;
     const track = $("#reel-track");
     track.innerHTML = "";
     track.style.transform = "translateY(0px)";
@@ -426,17 +481,41 @@
     for(let i=0; i<REEL_LENGTH-1; i++){
       sequence.push(pool[Math.floor(Math.random()*pool.length)]);
     }
-    sequence.push(finalChallenge); // el último siempre es el elegido real
+    sequence.push(finalChallenge || pool[Math.floor(Math.random()*pool.length)]); // el último siempre es el elegido real
 
+    const reelLabel = (c) => c.text.split(" ").slice(0,5).join(" ") + "…";
     sequence.forEach(c => {
       const div = document.createElement("div");
       div.className = "reel-item";
       const p = document.createElement("p");
       p.className = "font-display font-extrabold text-2xl tight-sm uppercase opacity-90";
-      p.textContent = c.text.split(" ").slice(0,5).join(" ") + "…";
+      p.textContent = reelLabel(c);
       div.appendChild(p);
       track.appendChild(div);
     });
+
+    if(pending){
+      pending.result.then((r) => {
+        arrived = true;
+        resolved = r;
+        if(r){
+          const last = track.lastElementChild && track.lastElementChild.querySelector("p");
+          if(last) last.textContent = reelLabel(r.challenge);
+        }
+      });
+    }
+
+    // Al terminar la ruleta: con el reto ya elegido, se revela; si el servidor
+    // aún no ha contestado, se espera (como mucho el tiempo de SERVER_DRAW_TIMEOUT).
+    function finish(){
+      if(!arrived){ state.revealTimeout = setTimeout(finish, 120); return; }
+      if(!resolved){
+        showToast("No hay retos en esta categoría todavía.");
+        goTo("home");
+        return;
+      }
+      revealChallenge(data.activeChallenge ? data.activeChallenge.challenge : resolved.challenge);
+    }
 
     // El viewport mide lo mismo que un item, así que el desplazamiento final
     // centra exactamente el último elemento (el reto elegido) en la ventana.
@@ -468,7 +547,7 @@
       }else{
         state.spinHandle = null;
         track.style.transform = `translateY(${finalOffset}px)`;
-        state.revealTimeout = setTimeout(() => revealChallenge(finalChallenge), 160);
+        state.revealTimeout = setTimeout(finish, 160);
       }
     }
     state.spinHandle = requestAnimationFrame(frame);
@@ -497,15 +576,55 @@
   function renderSkipButton(){
     const skip = $("#skip-btn");
     skip.classList.toggle("hidden", !(testActive() && data.activeChallenge));
+    const active = data.activeChallenge;
+    $("#abandon-btn").classList.toggle("hidden", !(active && active.phase !== "spinning"));
   }
   $("#skip-btn").addEventListener("click", () => {
     if(!testActive() || !data.activeChallenge) return;
+    syncDraw("admin_skip_draw");
     stopCountdown();
     data.activeChallenge = null;
     saveData();
     showToast("Reto saltado · modo pruebas");
     goTo("home");
   });
+  /* ---------- ABANDONO JUSTIFICADO ----------
+     El reto no se cambia por otro: se abandona con un motivo y no suma XP.
+     Lo decide la base de datos («peligroso» siempre; otros, uno por semana). */
+  $("#abandon-btn").addEventListener("click", () => {
+    if(!data.activeChallenge) return;
+    openSheet({
+      title: "¿Por qué no puedes hacerlo?",
+      html: `<p>Abandonar no suma XP y no te da otro reto al momento. Si es peligroso, siempre puedes; por otros motivos, una vez por semana.</p>`,
+      actions: [
+        { label:"Es peligroso", danger:true, onClick: () => abandonActive("peligroso") },
+        { label:"Ahora mismo es imposible", onClick: () => abandonActive("imposible") },
+        { label:"Cruza un límite personal", onClick: () => abandonActive("limite_personal") },
+        { label:"Cancelar" }
+      ]
+    });
+  });
+
+  async function abandonActive(reason){
+    const active = data.activeChallenge;
+    if(!active) return;
+    if(cloudOn && active.drawId){
+      try{
+        await Cloud.rpc("abandon_draw", { p_draw_id: active.drawId, p_reason: reason });
+      }catch(e){
+        // Regla de la base de datos (p. ej. límite semanal): el reto sigue.
+        if(e.status && e.status < 500 && e.status !== 401){ showToast(e.message); return; }
+        // Sin red: se envía más tarde; si el servidor no lo acepta, el reto volverá.
+        Cloud.enqueue("abandon_draw", { p_draw_id: active.drawId, p_reason: reason }).catch(() => {});
+      }
+    }
+    stopCountdown();
+    data.activeChallenge = null;
+    saveData();
+    showToast("Reto abandonado. No suma XP.");
+    goTo("home");
+  }
+
   function setTestMode(on, { silent } = {}){
     if(on && !testAllowed){
       adminDoor = true;
@@ -623,7 +742,17 @@
 
   // Bifurca según el tipo de reto: los de cronómetro arrancan el temporizador
   // en pantalla; los de Experiencia se apuntan en "Retos pendientes".
+  // Cada paso del reto se apunta también en el servidor (con reintentos).
+  function syncDraw(fn, extra){
+    const active = data.activeChallenge;
+    const drawId = extra && extra.drawId ? extra.drawId : (active && active.drawId);
+    if(!cloudOn || !drawId) return;
+    const args = Object.assign({ p_draw_id: drawId }, extra && extra.args);
+    Cloud.enqueue(fn, args).catch(() => {});
+  }
+
   function handleStart(challenge){
+    if(challenge.durationType !== "pending") syncDraw("start_draw");
     if(challenge.durationType === "pending"){
       savePendingChallenge(challenge);
     }else if(challenge.durationType === "research"){
@@ -640,8 +769,10 @@
       text: challenge.text,
       category: challenge.category,
       points: challenge.points,
-      savedAt: Date.now()
+      savedAt: Date.now(),
+      drawId: data.activeChallenge ? data.activeChallenge.drawId || null : null
     };
+    syncDraw("save_pending");
     // Nunca dos veces el mismo reto en pendientes (en modo pruebas puede volver a salir).
     data.pendingChallenges = data.pendingChallenges.filter(p => p.challengeId !== challenge.id);
     data.pendingChallenges.push(entry);
@@ -813,6 +944,7 @@
       id: challenge.id, text: challenge.text, category: challenge.category, points: challenge.points
     });
     Core.registerRecent(data, challenge.id);
+    syncDraw("complete_draw");
     data.activeChallenge = null;
     saveData();
 
@@ -889,6 +1021,7 @@
     vibrate([15, 40, 15, 40, 25]);
 
     Core.applyCompletion(data, { id: entry.challengeId, text: entry.text, category: entry.category, points: entry.points });
+    if(entry.drawId) syncDraw("complete_draw", { drawId: entry.drawId });
     data.pendingChallenges = data.pendingChallenges.filter(a => a.activeId !== activeId);
     saveData();
     updatePendingBadge();
@@ -1178,7 +1311,69 @@
     $("#reset-btn").addEventListener("click", confirmReset);
   }
 
+  /* ---------- CUENTA (v2.2) ---------- */
+  const LEGACY_FLAG = "inergo_legacy_imported_v1";
+  function renderAccount(){
+    $("#account-section").classList.toggle("hidden", !cloudOn);
+    if(!cloudOn) return;
+    const registered = Cloud.isRegistered();
+    $("#account-guest").classList.toggle("hidden", registered);
+    $("#account-user").classList.toggle("hidden", !registered);
+    if(registered) $("#acc-user-email").textContent = Cloud.getSession().email;
+  }
+
+  // Sube una sola vez el progreso que ya estaba en este móvil.
+  async function importLegacyOnce(){
+    let done = null;
+    try{ done = localStorage.getItem(LEGACY_FLAG); }catch(e){}
+    if(done || (data.xp === 0 && Core.totalCompleted(data) === 0)) return;
+    try{
+      await Cloud.rpc("import_legacy_progress", { p_xp: data.xp, p_completed: Core.totalCompleted(data), p_stats: data.stats });
+    }catch(e){
+      if(!(e.status && e.status < 500)) return; // red: se intenta otra vez al próximo inicio de sesión
+    }
+    try{ localStorage.setItem(LEGACY_FLAG, "1"); }catch(e){}
+  }
+
+  async function accountAction(kind){
+    const btn = kind === "signup" ? $("#acc-signup") : $("#acc-signin");
+    const email = $("#acc-email").value, pw = $("#acc-password").value;
+    if(kind === "signup" && !$("#acc-adult").checked){ showToast("Marca que tienes 18 años o más para crear la cuenta."); return; }
+    setBusy(btn, true);
+    try{
+      if(kind === "signup"){
+        await Cloud.signUp(email, pw);
+        await Cloud.rpc("confirm_adult", {}).catch(() => Cloud.enqueue("confirm_adult", {}));
+        showToast("Cuenta creada.");
+      }else{
+        await Cloud.signIn(email, pw);
+        showToast("Sesión iniciada.");
+      }
+      await importLegacyOnce();
+      $("#acc-password").value = "";
+      refreshAdminRights();
+    }catch(e){
+      showToast(e.message);
+    }
+    setBusy(btn, false);
+    renderAccount();
+  }
+
+  function setupAccount(){
+    $("#account-guest").addEventListener("submit", (e) => { e.preventDefault(); accountAction("signup"); });
+    $("#acc-signin").addEventListener("click", () => accountAction("signin"));
+    $("#acc-signout").addEventListener("click", async () => {
+      await Cloud.signOut();
+      testAllowed = false;
+      admin.isAdmin = null;
+      renderTestModeUI();
+      renderAccount();
+      showToast("Sesión cerrada.");
+    });
+  }
+
   function renderSettings(){
+    renderAccount();
     $("#sound-toggle").checked = !!data.soundOn;
     $("#haptics-toggle").checked = !!data.hapticsOn && canVibrate;
     renderInstallRow();
@@ -1425,6 +1620,12 @@
           resumeActive();
           return;
         }
+        if(serverDrawsOn()){
+          longPressFired = true;
+          showToast("Sorpréndeme activado.");
+          launchServerDraw("todos", { surprise:true });
+          return;
+        }
         const chosen = Core.pickChallenge(drawView(), "todos");
         if(!chosen) return;
         longPressFired = true;
@@ -1583,7 +1784,8 @@
   // es, habilita el modo pruebas. Sin sesión o sin permiso, queda apagado.
   async function refreshAdminRights(){
     let ok = false;
-    if(cloudOn && Cloud.getSession()){
+    const sess = cloudOn ? Cloud.getSession() : null;
+    if(sess && !sess.anonymous){
       try{ ok = await Cloud.isAdmin(); }catch(e){ ok = false; }
     }
     testAllowed = ok;
@@ -1592,7 +1794,9 @@
   }
 
   function renderAdminEntry(){
-    const show = cloudOn && (adminDoor || !!Cloud.getSession());
+    // Todo el mundo tiene sesión (anónima o con cuenta): la entrada solo se
+    // muestra tras el gesto secreto o a quien la base de datos reconoce como admin.
+    const show = cloudOn && (adminDoor || testAllowed);
     $("#admin-section").classList.toggle("hidden", !show);
   }
 
@@ -1885,8 +2089,13 @@
     registerServiceWorker();
     applyTestModeFromUrl();
     setupAdmin();
+    if(cloudOn) setupAccount();
     renderTestModeUI();
     refreshAdminRights();
+    if(cloudOn){
+      Cloud.flushOutbox().catch(() => {});
+      window.addEventListener("online", () => Cloud.flushOutbox().catch(() => {}));
+    }
 
     const fromLoginLink = consumeLoginRedirect();
     // Por si el enlace se abre con la app ya cargada en esa misma pestaña.

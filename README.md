@@ -127,7 +127,8 @@ El service worker solo funciona por `https://` o `localhost`.
 ## Datos y privacidad
 
 - El progreso vive en `localStorage` con la clave `inergo_data_v1` (**no cambiarla**: es el progreso de la gente). El formato lleva `schemaVersion` y se migra solo.
-- El progreso no sale del dispositivo. La app solo descarga el catálogo de retos (sin enviar datos personales). No hay cookies. Solo los administradores inician sesión.
+- Desde la v2.2, con conexión, cada reto sorteado y sus pasos se guardan en Supabase con una sesión anónima (sin email). Con cuenta, además el email y el progreso. XP y racha locales siguen en `localStorage`. No hay cookies.
+- **Pendiente antes de abrir al público:** política de privacidad, borrar cuenta y exportar datos desde la app.
 - Analítica: Vercel Web Analytics (sin cookies, solo visitas agregadas). Se activa en Vercel → proyecto → Analytics → Enable; mientras no esté activa, el script no registra nada.
 - *Ajustes* permite exportar, importar y borrar todo.
 

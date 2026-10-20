@@ -351,3 +351,30 @@ test("revisión de seguridad v2.1.6: sin autostop ni grabar a terceros sin permi
   assert.ok(!texts.some(t => t.includes("grabando su reacción")), "sin grabar a terceros sin permiso");
   assert.ok(!C.DEFAULT_CHALLENGES.some(c => c.id === "espontanea-013"), "espontanea-013 retirado");
 });
+
+test("v2.2: reto asignado por el servidor → reto de la app", () => {
+  const id = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
+  const e = C.challengeFromDraw({ id, challenge_id:"espontanea-002", challenge_text:"Entra en una tienda y pide un descuento.", category:"espontanea", points:20, status:"revealed" });
+  assert.equal(e.drawId, id);
+  assert.equal(e.challenge.durationType, "timer");
+  assert.equal(e.challenge.duration, 300, "duración del catálogo");
+  const k = C.challengeFromDraw({ id, challenge_id:"conocimiento-999", challenge_text:"Investiga algo raro.", category:"conocimiento", points:20 });
+  assert.equal(k.challenge.durationType, "research");
+  assert.equal(k.challenge.researchDuration, 600);
+  const x = C.challengeFromDraw({ id, challenge_id:"experiencia-001", challenge_text:"Ve a un pueblo y cena solo.", category:"experiencia", points:50 });
+  assert.equal(x.challenge.durationType, "pending");
+  assert.equal(C.challengeFromDraw({ id:"no-uuid", challenge_id:"a", challenge_text:"texto largo", category:"espontanea" }), null);
+  assert.equal(C.challengeFromDraw({ id, challenge_id:"a", challenge_text:"texto largo", category:"inventada" }), null);
+});
+
+test("v2.2: el id del servidor se conserva en reto activo y pendientes", () => {
+  const id = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
+  const c = C.DEFAULT_CHALLENGES[0];
+  const active = C.createActive(c, 1000, id);
+  const d = C.normalizeData({ schemaVersion:2, activeChallenge: active,
+    pendingChallenges:[{ activeId:"pending-1", challengeId:"experiencia-001", text:"Ve a un pueblo y cena solo.", category:"experiencia", points:50, savedAt:1, drawId:id }] });
+  assert.equal(d.activeChallenge.drawId, id);
+  assert.equal(d.pendingChallenges[0].drawId, id);
+  const bad = C.normalizeData({ schemaVersion:2, activeChallenge: Object.assign({}, active, { drawId:"<script>" }) });
+  assert.equal(bad.activeChallenge.drawId, null);
+});

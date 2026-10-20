@@ -40,11 +40,11 @@
 <!-- Fuentes y estilos propios (sin dependencias externas: funciona sin conexión) -->
 <link rel="preload" href="manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="inergo.css?v=2.1.6">
-<script src="inergo-config.js?v=2.1.6" defer></script>
-<script src="inergo-core.js?v=2.1.6" defer></script>
-<script src="inergo-cloud.js?v=2.1.6" defer></script>
-<script src="inergo-app.js?v=2.1.6" defer></script>
+<link rel="stylesheet" href="inergo.css?v=2.2.0">
+<script src="inergo-config.js?v=2.2.0" defer></script>
+<script src="inergo-core.js?v=2.2.0" defer></script>
+<script src="inergo-cloud.js?v=2.2.0" defer></script>
+<script src="inergo-app.js?v=2.2.0" defer></script>
 <!-- Vercel Web Analytics: visitas sin cookies (se activa en el panel de Vercel; si no está activo, no hace nada) -->
 <script src="/_vercel/insights/script.js" defer></script>
 </head>
@@ -226,6 +226,8 @@
         <button id="action-btn" class="btn-invert self-center rounded-full px-7 py-3 font-display font-black text-sm tight-sm uppercase shrink-0"></button>
         <!-- Solo en modo pruebas: permite abandonar el reto sin completarlo -->
         <button id="skip-btn" class="hidden self-center font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 -mt-3 shrink-0">Saltar reto · modo pruebas</button>
+        <!-- Abandono justificado: sin XP; «peligroso» siempre, otros motivos una vez por semana -->
+        <button id="abandon-btn" class="hidden self-center font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 -mt-3 shrink-0">No puedo hacerlo</button>
 
       </div>
 
@@ -357,6 +359,33 @@
     </div>
 
     <div class="flex-1 overflow-y-auto scrollbar-none flex flex-col gap-8 pb-8">
+
+      <!-- Cuenta (v2.2): sin cuenta se juega igual, con sesión anónima -->
+      <div id="account-section" class="hidden">
+        <p class="set-section-title">Tu cuenta</p>
+        <form id="account-guest" class="flex flex-col gap-3" novalidate>
+          <p class="text-sm opacity-85 leading-snug">Crea tu cuenta para guardar tu racha y tus retos en cualquier móvil. Lo que llevas hecho se conserva.</p>
+          <label for="acc-email" class="sr-only">Email</label>
+          <input id="acc-email" type="email" inputmode="email" autocomplete="email" autocapitalize="off" spellcheck="false" class="w-full rounded-xl px-4 py-3 font-medium text-base" placeholder="tu@email.com">
+          <label for="acc-password" class="sr-only">Contraseña</label>
+          <input id="acc-password" type="password" autocomplete="current-password" class="w-full rounded-xl px-4 py-3 font-medium text-base" placeholder="Contraseña (mínimo 8 caracteres)">
+          <label class="flex items-start gap-3 text-sm opacity-90 leading-snug">
+            <input id="acc-adult" type="checkbox" class="mt-1">
+            <span>Tengo 18 años o más. INERGO guardará mis retos y mi progreso en su servidor.</span>
+          </label>
+          <div class="flex gap-3 flex-wrap">
+            <button id="acc-signup" type="submit" class="btn-invert rounded-full px-6 py-3 font-display font-black text-sm tight-sm uppercase">Crear cuenta</button>
+            <button id="acc-signin" type="button" class="btn-ghost rounded-full px-5 py-3 font-display font-bold text-xs uppercase">Ya tengo cuenta</button>
+          </div>
+        </form>
+        <div id="account-user" class="hidden set-row">
+          <div>
+            <p class="set-row-label">Cuenta conectada</p>
+            <p class="set-row-hint" id="acc-user-email"></p>
+          </div>
+          <button id="acc-signout" type="button" class="btn-ghost rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Salir</button>
+        </div>
+      </div>
 
       <div>
         <p class="set-section-title">Experiencia</p>

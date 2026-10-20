@@ -1,5 +1,14 @@
 # Cambios
 
+## v2.2.0 (rama `mvp-cuentas-y-sorteo-servidor`, sin publicar)
+
+- **Sorteo en el servidor.** Con conexión, PLAY crea una sesión anónima (sin registro) y pide el reto a `draw_challenge`: si ya tienes uno abierto, en este u otro dispositivo, te devuelve ese. La ruleta arranca al instante y el reto real se coloca en la última casilla al llegar. Sin conexión o si el servidor no contesta en 6 s, se sortea en el móvil como antes.
+- **Cada paso se apunta en el servidor** (empezar, apuntar en pendientes, completar, saltar en modo pruebas) con una cola de reintentos si falla la red (`inergo_outbox_v1`).
+- **Abandono justificado:** «No puedo hacerlo» bajo cada reto, con tres motivos. No suma XP. «Es peligroso» siempre se acepta; los otros, uno por semana (lo decide la base de datos).
+- **Tu cuenta** en Ajustes: email + contraseña y confirmación de 18+. La cuenta anónima se convierte en la cuenta nueva y el progreso del móvil se sube una vez (`import_legacy_progress`).
+- La entrada de Administración ya no aparece por tener sesión: solo tras el gesto secreto o si la base de datos te reconoce como admin.
+- Campos de contraseña con el mismo estilo que el resto (CSS recompilado).
+
 ## v2.1.6
 
 - **Revisión de seguridad del catálogo** (aprobada el 20 oct 2026): sin autostop (`experiencia-003`), sin grabar a desconocidos sin permiso (`espontanea-001`), confesión más ligera (`espontanea-005`), abrazo con «si dice que no, lo aceptas» (`espontanea-003`, riesgo medio) y `espontanea-013` retirado (lo cubre Conocimiento). Copia de serie: 102 retos.
