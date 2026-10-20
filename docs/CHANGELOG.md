@@ -4,6 +4,7 @@
 
 - **Modo pruebas solo para administradores.** `?test=1` y los 5 toques en la versión ya no activan el modo pruebas: solo muestran la entrada de Administración. El interruptor aparece cuando la base de datos confirma que la sesión es de un administrador. Quien tuviera el modo pruebas guardado de antes lo pierde sin hacer nada.
 - **Analítica de visitas** con Vercel Web Analytics (sin cookies). El service worker no la cachea.
+- **Base de datos del MVP (aplicada en Supabase, la app aún no la usa):** `profiles`, `draws`, `weekly_challenges`, `reports`, `legacy_imports` y `challenges.risk_level`. El sorteo, empezar, apuntar, completar y abandonar solo se hacen con funciones de la base de datos; un índice único garantiza un solo reto abierto por persona. 28 pruebas de permisos y reglas superadas (`supabase/tests/mvp_rls.sql`).
 
 ## v2.1.4
 
