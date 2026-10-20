@@ -6,14 +6,15 @@ App web instalable (PWA) que propone un reto incómodo para que lo hagas y lo gr
 
 **Regla central:** una vez pulsado PLAY, el reto no se puede rechazar, cambiar ni saltar. Desde la v2 esto se cumple también si sales a la home, recargas o cierras la app: al volver, INERGO te devuelve al mismo reto.
 
-## Modo pruebas (solo para testear)
+## Modo pruebas (solo administradores)
 
-Permite **saltar un reto ya revelado** sin completarlo (no suma XP ni racha). Para cualquier otro usuario la regla sigue intacta.
+Permite **saltar un reto ya revelado** sin completarlo (no suma XP ni racha). Desde la v2.1.5 **solo funciona con una sesión de administrador** confirmada por la base de datos (`is_admin()`); para cualquier otra persona la regla sigue intacta aunque conozca el truco.
 
-- **Activar:** abre `inergo.vercel.app/?test=1`, o en la app instalada ve a **Ajustes y toca 5 veces el texto de la versión** (abajo del todo).
-- **Se nota:** en la home aparece la etiqueta negra «MODO PRUEBAS» y, durante un reto, el enlace «Saltar reto · modo pruebas».
-- **Desactivar:** interruptor «Modo pruebas» en Ajustes, `?test=0` o otros 5 toques en la versión. **Desactívalo antes de grabar.**
-- **Reto fijo:** en modo pruebas, PLAY en **Experiencia** da siempre «Practica un deporte que no suelas hacer… y haz un vlog». Para cambiarlo o quitarlo, edita `TEST_PINNED` en `inergo-core.js`.
+- **Activar:** abre `inergo.vercel.app/?test=1` o toca 5 veces la versión en Ajustes. Eso solo **desvela la entrada de Administración**: entra con tu email de administrador y aparecerá el interruptor «Modo pruebas».
+- **Se nota:** etiqueta negra «MODO PRUEBAS» en la home y el enlace «Saltar reto · modo pruebas» durante un reto.
+- **Desactivar:** interruptor en Ajustes, `?test=0` o cerrar sesión. **Desactívalo antes de grabar.**
+- **Reto fijo:** en modo pruebas, PLAY en **Experiencia** da siempre el reto de `TEST_PINNED` (`inergo-core.js`).
+- Limitación conocida: la comprobación vive en el navegador. Cuando el sorteo pase al servidor (MVP), saltar retos también lo validará la base de datos.
 
 ## Catálogo de retos (Supabase)
 
@@ -126,7 +127,8 @@ El service worker solo funciona por `https://` o `localhost`.
 ## Datos y privacidad
 
 - El progreso vive en `localStorage` con la clave `inergo_data_v1` (**no cambiarla**: es el progreso de la gente). El formato lleva `schemaVersion` y se migra solo.
-- El progreso no sale del dispositivo. La app solo descarga el catálogo de retos (sin enviar datos personales). No hay cookies ni analítica. Solo los administradores inician sesión.
+- El progreso no sale del dispositivo. La app solo descarga el catálogo de retos (sin enviar datos personales). No hay cookies. Solo los administradores inician sesión.
+- Analítica: Vercel Web Analytics (sin cookies, solo visitas agregadas). Se activa en Vercel → proyecto → Analytics → Enable; mientras no esté activa, el script no registra nada.
 - *Ajustes* permite exportar, importar y borrar todo.
 
 ## Seguridad

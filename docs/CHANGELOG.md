@@ -1,5 +1,10 @@
 # Cambios
 
+## v2.1.5
+
+- **Modo pruebas solo para administradores.** `?test=1` y los 5 toques en la versión ya no activan el modo pruebas: solo muestran la entrada de Administración. El interruptor aparece cuando la base de datos confirma que la sesión es de un administrador. Quien tuviera el modo pruebas guardado de antes lo pierde sin hacer nada.
+- **Analítica de visitas** con Vercel Web Analytics (sin cookies). El service worker no la cachea.
+
 ## v2.1.4
 
 - **Nuevo reto de Experiencia:** «Practica un deporte que no suelas hacer en un lugar/zona que no sea habitual para ti y haz un vlog.» (`experiencia-011`, en el catálogo de Supabase).
