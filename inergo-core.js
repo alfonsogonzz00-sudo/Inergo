@@ -17,7 +17,7 @@
 })(typeof self !== "undefined" ? self : this, function(){
   "use strict";
 
-  const APP_VERSION = "2.1.6";
+  const APP_VERSION = "2.2.0";
   const STORAGE_KEY = "inergo_data_v1"; // NO cambiar: contiene el progreso de los usuarios
   const SCHEMA_VERSION = 2;
 
@@ -234,6 +234,8 @@
   const SAFE_ID = /^[A-Za-z0-9_-]{1,80}$/;
   function safeId(v){ return typeof v === "string" && SAFE_ID.test(v) ? v : null; }
   const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  function uuidOrNull(v){ return typeof v === "string" && UUID.test(v) ? v.toLowerCase() : null; }
 
   function normalizeCustom(c){
     if(!isObj(c)) return null;
@@ -282,7 +284,8 @@
       launchedAt: nonNegInt(a.launchedAt, 0),
       endsAt: null,
       total: null,
-      microcopy: typeof a.microcopy === "string" ? a.microcopy.slice(0, 60) : null
+      microcopy: typeof a.microcopy === "string" ? a.microcopy.slice(0, 60) : null,
+      drawId: uuidOrNull(a.drawId)
     };
     if(TIMED_PHASES.includes(a.phase)){
       const endsAt = nonNegInt(a.endsAt, 0);
@@ -344,7 +347,8 @@
             activeId, challengeId, text,
             category: STAT_KEYS.includes(p.category) ? p.category : "experiencia",
             points: nonNegInt(p.points, 0),
-            savedAt: nonNegInt(p.savedAt, Date.now())
+            savedAt: nonNegInt(p.savedAt, Date.now()),
+            drawId: uuidOrNull(p.drawId)
           };
         }).filter(Boolean)
       : [];
@@ -563,15 +567,39 @@
     return normalizeChallengeSnapshot(challenge);
   }
 
-  function createActive(challenge, now){
+  function createActive(challenge, now, drawId){
     return {
       challenge: snapshot(challenge),
       phase: "spinning",
       launchedAt: now === undefined ? Date.now() : now,
       endsAt: null,
       total: null,
-      microcopy: null
+      microcopy: null,
+      drawId: uuidOrNull(drawId)
     };
+  }
+
+  /* Reto asignado por el servidor (fila de public.draws) → reto de la app.
+     La duración sale del catálogo; si no está en la copia local, la de su categoría. */
+  const DEFAULT_TIMER = { espontanea: 600, reflexion: 60 };
+  function challengeFromDraw(row){
+    if(!isObj(row) || !uuidOrNull(row.id)) return null;
+    const id = typeof row.challenge_id === "string" && CATALOG_ID.test(row.challenge_id) ? row.challenge_id : null;
+    const text = str(row.challenge_text, 400);
+    if(!id || !text || !STAT_KEYS.includes(row.category)) return null;
+    const points = nonNegInt(row.points, CATEGORY_POINTS[row.category]);
+    const known = catalog.find(c => c.id === id);
+    let challenge;
+    if(row.category === "experiencia") challenge = { id, text, category:"experiencia", durationType:"pending", points };
+    else if(row.category === "conocimiento"){
+      challenge = { id, text, category:"conocimiento", durationType:"research",
+        researchDuration: known && known.researchDuration ? known.researchDuration : 600,
+        talkDuration: known && known.talkDuration ? known.talkDuration : 60, points };
+    }else{
+      challenge = { id, text, category: row.category, durationType:"timer",
+        duration: known && known.duration ? known.duration : DEFAULT_TIMER[row.category], points };
+    }
+    return { challenge, drawId: row.id.toLowerCase(), status: row.status };
   }
 
   function startTimedPhase(active, phase, seconds, now){
@@ -627,7 +655,7 @@
   }
 
   return {
-    APP_VERSION, STORAGE_KEY, SCHEMA_VERSION,
+    APP_VERSION, STORAGE_KEY, SCHEMA_VERSION, challengeFromDraw,
     CATEGORIES, STAT_KEYS, CUSTOM_CATEGORIES, CUSTOM_DURATIONS, CUSTOM_CHALLENGE_POINTS,
     DEFAULT_CHALLENGES, MICROCOPY, SPIN_PHRASE, HISTORY_LIMIT, RECENT_LIMIT,
     mk, mkP, mkK,

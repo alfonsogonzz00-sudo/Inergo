@@ -47,7 +47,8 @@
       access_token: payload.access_token,
       refresh_token: payload.refresh_token,
       expires_at: expiresAt,
-      email: (payload.user && payload.user.email) || claims.email || ""
+      email: (payload.user && payload.user.email) || claims.email || "",
+      anonymous: payload.user ? !!payload.user.is_anonymous : !!claims.is_anonymous
     };
     writeJSON(AUTH_KEY, session);
     return session;
@@ -69,6 +70,28 @@
     if(/expired|invalid/i.test(raw) && /token|otp|code|link/i.test(raw)) return "El enlace ha caducado o ya se usó. Pide uno nuevo.";
     if(/row-level security|permission denied/i.test(raw) || status === 403) return "Esta cuenta no tiene permisos para hacer eso.";
     if(status === 401) return "La sesión ha caducado. Vuelve a entrar.";
+    // Códigos propios de las funciones de INERGO (supabase/migrations).
+    const own = {
+      limite_abandonos: "Ya has usado tu abandono de esta semana. Solo puedes abandonar si el reto es peligroso.",
+      reto_no_disponible: "Ese reto ya no está activo.",
+      sin_retos: "No hay retos en esta categoría todavía.",
+      necesitas_cuenta_y_prueba: "Para salir en la tripulación necesitas cuenta, usuario y el enlace de tu vídeo.",
+      ya_importado: "Tu progreso ya estaba guardado.",
+      solo_admin: "Solo administradores.",
+      user_already_exists: "Ya hay una cuenta con ese email. Entra con tu contraseña.",
+      email_exists: "Ya hay una cuenta con ese email. Entra con tu contraseña.",
+      invalid_credentials: "Email o contraseña incorrectos.",
+      weak_password: "La contraseña es demasiado débil: usa al menos 8 caracteres.",
+      anonymous_provider_disabled: "El acceso sin cuenta no está activado en el servidor.",
+      email_provider_disabled: "El acceso con email no está activado en el servidor.",
+      email_not_confirmed: "Ese email aún no está confirmado."
+    };
+    const code = (body && (body.error_code || body.code)) || "";
+    if(own[raw]) return own[raw];
+    if(own[code]) return own[code];
+    if(/invalid login credentials/i.test(raw)) return own.invalid_credentials;
+    if(/already registered|already been registered/i.test(raw)) return own.user_already_exists;
+    if(/password should be/i.test(raw)) return own.weak_password;
     if(/duplicate key/i.test(raw)) return "Ya existe un reto con ese identificador.";
     if(/check constraint/i.test(raw)) return "El reto no cumple las reglas del catálogo.";
     return raw ? String(raw).slice(0, 140) : "Algo ha fallado (" + status + ").";
@@ -105,6 +128,7 @@
     if(!res.ok){
       const err = new Error(friendlyError(res.status, data));
       err.status = res.status;
+      err.code = (data && (data.message || data.error_code || data.code)) || "";
       throw err;
     }
     return data;
@@ -216,8 +240,106 @@
     return rows[0];
   }
 
+  /* ---------- Cuentas de usuario ---------- */
+  function isRegistered(){ const s = getSession(); return !!(s && !s.anonymous && s.email); }
+
+  // Sesión anónima: cualquiera puede jugar sin registrarse y el reto queda
+  // guardado en el servidor desde el primer giro.
+  let anonPending = null;
+  async function ensureSession(){
+    const s = await validSession().catch(() => null);
+    if(s) return s;
+    if(!anonPending){
+      anonPending = request("/auth/v1/signup", { method:"POST", body:{ data:{} } })
+        .then(storeSession)
+        .finally(() => { anonPending = null; });
+    }
+    return anonPending;
+  }
+
+  function cleanEmail(email){
+    const e = String(email || "").trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) throw new Error("Escribe un email válido.");
+    return e;
+  }
+  function checkPassword(pw){
+    if(typeof pw !== "string" || pw.length < 8) throw new Error("La contraseña necesita al menos 8 caracteres.");
+    return pw;
+  }
+
+  // Crear cuenta. Si ya juegas como anónimo, se convierte la MISMA cuenta
+  // (conserva tus retos); si no, se crea una nueva.
+  async function signUp(email, password){
+    const e = cleanEmail(email), pw = checkPassword(password);
+    const s = await validSession().catch(() => null);
+    if(s && s.anonymous){
+      try{
+        // Supabase exige poner primero el email y después la contraseña.
+        await request("/auth/v1/user", { method:"PUT", body:{ email: e }, auth:true });
+        await request("/auth/v1/user", { method:"PUT", body:{ password: pw }, auth:true });
+        // El token antiguo dice "anónimo": se renueva para que el servidor lo sepa.
+        const fresh = await request("/auth/v1/token?grant_type=refresh_token", { method:"POST", body:{ refresh_token: s.refresh_token } });
+        const stored = storeSession(fresh);
+        if(!stored.anonymous) return stored;
+      }catch(err){
+        // Email ya usado, contraseña débil…: el mensaje sirve tal cual.
+        if(/email_exists|user_already_exists|weak_password/.test(err.code || "")) throw err;
+      }
+      // Si el servidor no deja convertir la cuenta anónima (p. ej. pide
+      // confirmar el email), se crea una cuenta nueva. El progreso del móvil
+      // se sube igualmente con import_legacy_progress.
+    }
+    const r = await request("/auth/v1/signup", { method:"POST", body:{ email: e, password: pw } });
+    if(!r || !r.access_token) throw new Error("Revisa tu email para confirmar la cuenta y luego entra.");
+    return storeSession(r);
+  }
+
+  async function signIn(email, password){
+    const e = cleanEmail(email);
+    if(!password) throw new Error("Escribe tu contraseña.");
+    const r = await request("/auth/v1/token?grant_type=password", { method:"POST", body:{ email: e, password } });
+    return storeSession(r);
+  }
+
+  /* ---------- Funciones del servidor (supabase/migrations) ---------- */
+  async function rpc(name, args){
+    if(!/^[a-z_]{3,40}$/.test(name)) throw new Error("Función desconocida.");
+    await ensureSession();
+    return request("/rest/v1/rpc/" + name, { method:"POST", body: args || {}, auth:true });
+  }
+
+  /* Cola de envíos pendientes: si una llamada falla por la red, se guarda y
+     se reintenta en orden (al abrir la app, al recuperar conexión y antes de
+     cada sorteo). Los errores de reglas (4xx) no se reintentan. */
+  const OUTBOX_KEY = "inergo_outbox_v1";
+  const OUTBOX_FNS = ["start_draw","save_pending","complete_draw","abandon_draw","admin_skip_draw","confirm_adult","import_legacy_progress"];
+  function readOutbox(){ const q = readJSON(OUTBOX_KEY); return Array.isArray(q) ? q.filter(j => j && OUTBOX_FNS.includes(j.fn)).slice(0, 50) : []; }
+  function enqueue(fn, args){
+    const q = readOutbox(); q.push({ fn, args: args || {}, at: Date.now() }); writeJSON(OUTBOX_KEY, q);
+    return flushOutbox();
+  }
+  let flushing = null;
+  function flushOutbox(){
+    if(!enabled()) return Promise.resolve();
+    if(flushing) return flushing;
+    flushing = (async () => {
+      let q = readOutbox();
+      while(q.length){
+        const job = q[0];
+        try{ await rpc(job.fn, job.args); }
+        catch(e){
+          if(!e.status || e.status >= 500 || e.status === 401) break; // red o servidor: se reintenta luego
+        }
+        q = readOutbox().slice(1); writeJSON(OUTBOX_KEY, q.length ? q : null);
+      }
+    })().finally(() => { flushing = null; });
+    return flushing;
+  }
+  function outboxSize(){ return readOutbox().length; }
+
   window.InergoCloud = {
     AUTH_KEY, enabled, getSession, clearSession, signOut, sendLink, consumeUrlSession, isAdmin,
-    fetchCatalog, readCachedCatalog, saveCachedCatalog, createChallenge, updateChallenge
+    fetchCatalog, readCachedCatalog, saveCachedCatalog, createChallenge, updateChallenge,
+    ensureSession, isRegistered, signUp, signIn, rpc, enqueue, flushOutbox, outboxSize
   };
 })();
