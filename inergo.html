@@ -40,11 +40,11 @@
 <!-- Fuentes y estilos propios (sin dependencias externas: funciona sin conexión) -->
 <link rel="preload" href="manrope-latin-var.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="inergo.css?v=2.2.0">
-<script src="inergo-config.js?v=2.2.0" defer></script>
-<script src="inergo-core.js?v=2.2.0" defer></script>
-<script src="inergo-cloud.js?v=2.2.0" defer></script>
-<script src="inergo-app.js?v=2.2.0" defer></script>
+<link rel="stylesheet" href="inergo.css?v=2.3.0">
+<script src="inergo-config.js?v=2.3.0" defer></script>
+<script src="inergo-core.js?v=2.3.0" defer></script>
+<script src="inergo-cloud.js?v=2.3.0" defer></script>
+<script src="inergo-app.js?v=2.3.0" defer></script>
 <!-- Vercel Web Analytics: visitas sin cookies (se activa en el panel de Vercel; si no está activo, no hace nada) -->
 <script src="/_vercel/insights/script.js" defer></script>
 </head>
@@ -104,10 +104,11 @@
     <div class="flex-1 flex flex-col justify-center gap-9 min-h-0 py-1">
 
       <div class="shrink-0">
-        <div class="flex items-center gap-2 mb-1.5">
+        <div class="flex items-center flex-wrap gap-2 mb-1.5">
           <p class="font-num text-[11px] tracking-widest uppercase opacity-70">app de reto real</p>
           <span id="home-streak" class="hidden streak-badge"></span>
           <span id="test-badge" class="hidden streak-badge" style="background:var(--ink);">Modo pruebas</span>
+          <button id="barco-pill" data-nav="barco" class="hidden streak-badge">Barco</button>
         </div>
         <h1 class="hero-title font-display font-black max-w-[85%]">SAL DE TU<br>ZONA DE<br>CONFORT.</h1>
 
@@ -226,8 +227,12 @@
         <button id="action-btn" class="btn-invert self-center rounded-full px-7 py-3 font-display font-black text-sm tight-sm uppercase shrink-0"></button>
         <!-- Solo en modo pruebas: permite abandonar el reto sin completarlo -->
         <button id="skip-btn" class="hidden self-center font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 -mt-3 shrink-0">Saltar reto · modo pruebas</button>
-        <!-- Abandono justificado: sin XP; «peligroso» siempre, otros motivos una vez por semana -->
-        <button id="abandon-btn" class="hidden self-center font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 -mt-3 shrink-0">No puedo hacerlo</button>
+        <!-- Compartir en historias · añadir el vídeo al completar · abandono justificado (sin XP) -->
+        <div class="flex items-center justify-center gap-5 flex-wrap -mt-3 shrink-0">
+          <button id="share-btn" class="hidden font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2">Compartir</button>
+          <button id="evidence-btn" class="hidden font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2">Añadir mi vídeo</button>
+          <button id="abandon-btn" class="hidden font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2">No puedo hacerlo</button>
+        </div>
 
       </div>
 
@@ -350,6 +355,39 @@
   </section>
 
   <!-- ============ AJUSTES ============ -->
+  <!-- ============ BARCO DE LA SEMANA (v2.3) ============ -->
+  <section class="screen" id="screen-barco" data-screen="barco" aria-label="Barco de la semana">
+    <div class="flex items-center gap-3 pt-1 pb-5 shrink-0">
+      <button data-nav="home" aria-label="Volver" class="icon-btn opacity-90 active:opacity-60">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 5L8 12L15 19" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <h2 tabindex="-1" class="screen-heading font-display font-black text-2xl tight-sm uppercase outline-none">Barco de la semana</h2>
+    </div>
+    <div class="flex-1 overflow-y-auto scrollbar-none flex flex-col gap-6 pb-8">
+      <p id="barco-loading" class="text-sm opacity-80">Cargando…</p>
+      <div id="barco-none" class="hidden flex-col gap-3">
+        <p class="text-sm opacity-85 leading-snug">Esta semana no hay Barco. Mientras, tira un reto desde el inicio.</p>
+      </div>
+      <div id="barco-main" class="hidden flex-col gap-5">
+        <div class="card-dark rounded-3xl p-5 flex flex-col gap-3">
+          <p id="barco-title" class="font-num text-[11px] uppercase tracking-wide opacity-75"></p>
+          <p id="barco-text" class="font-display font-extrabold text-xl leading-snug uppercase"></p>
+          <p id="barco-meta" class="font-num text-[11px] uppercase tracking-wide opacity-70"></p>
+        </div>
+        <div class="flex items-center gap-5 flex-wrap">
+          <button id="barco-join" class="btn-invert rounded-full px-6 py-3 font-display font-black text-sm tight-sm uppercase">Subirme al Barco</button>
+          <button id="barco-share" class="font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2">Compartir</button>
+        </div>
+        <p id="barco-hint" class="text-sm opacity-80 leading-snug"></p>
+        <div>
+          <p class="set-section-title">Tripulación · <span id="barco-count">0</span></p>
+          <div id="barco-crew" class="flex flex-col"></div>
+          <p id="barco-crew-empty" class="hidden text-sm opacity-80 leading-snug">Nadie lo ha cumplido todavía. Sé el primero.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="screen" id="screen-settings" data-screen="settings">
     <div class="flex items-center gap-3 pt-1 pb-5 shrink-0">
       <button data-nav="home" aria-label="Volver" class="icon-btn opacity-90 active:opacity-60">
@@ -378,12 +416,22 @@
             <button id="acc-signin" type="button" class="btn-ghost rounded-full px-5 py-3 font-display font-bold text-xs uppercase">Ya tengo cuenta</button>
           </div>
         </form>
-        <div id="account-user" class="hidden set-row">
-          <div>
-            <p class="set-row-label">Cuenta conectada</p>
-            <p class="set-row-hint" id="acc-user-email"></p>
+        <div id="account-user" class="hidden">
+          <div class="set-row">
+            <div>
+              <p class="set-row-label">Cuenta conectada</p>
+              <p class="set-row-hint" id="acc-user-email"></p>
+            </div>
+            <button id="acc-signout" type="button" class="btn-ghost rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Salir</button>
           </div>
-          <button id="acc-signout" type="button" class="btn-ghost rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Salir</button>
+          <form id="acc-username-form" class="flex flex-col gap-2 pt-4" novalidate>
+            <label for="acc-username" class="set-row-label">Tu usuario</label>
+            <div class="flex gap-3">
+              <input id="acc-username" type="text" autocapitalize="off" autocomplete="username" spellcheck="false" maxlength="25" class="w-full rounded-xl px-4 py-3 font-medium text-base" placeholder="tu_usuario">
+              <button type="submit" class="btn-ghost rounded-full px-5 py-2.5 font-display font-bold text-xs uppercase shrink-0">Guardar</button>
+            </div>
+            <p class="set-row-hint">Sale en la tripulación del Barco solo si compartes tu vídeo.</p>
+          </form>
         </div>
       </div>
 
@@ -531,6 +579,28 @@
           <p class="font-num text-[11px] uppercase tracking-wide opacity-75 truncate">Sesión: <span class="admin-session-email"></span></p>
           <button class="admin-signout font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 -my-2 shrink-0">Cerrar sesión</button>
         </div>
+
+        <form id="barco-form" class="card-dark rounded-3xl p-5 flex flex-col gap-4" novalidate>
+          <p class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Barco de la semana</p>
+          <p id="barco-admin-current" class="text-sm opacity-85 leading-snug"></p>
+          <div class="flex flex-col gap-2">
+            <label for="barco-admin-challenge" class="font-num text-[11px] uppercase tracking-wide opacity-60">Reto</label>
+            <select id="barco-admin-challenge" class="w-full rounded-xl px-4 py-3 font-semibold text-sm"></select>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="barco-admin-title" class="font-num text-[11px] uppercase tracking-wide opacity-60">Título</label>
+            <input id="barco-admin-title" type="text" maxlength="80" class="w-full rounded-xl px-4 py-3 font-medium text-base" placeholder="Ej: Barco #1 · Hablar con extraños">
+          </div>
+          <div class="flex flex-col gap-2">
+            <label for="barco-admin-days" class="font-num text-[11px] uppercase tracking-wide opacity-60">Duración</label>
+            <select id="barco-admin-days" class="w-full rounded-xl px-4 py-3 font-semibold text-sm">
+              <option value="3">3 días</option>
+              <option value="7" selected>7 días</option>
+              <option value="14">14 días</option>
+            </select>
+          </div>
+          <button id="barco-admin-submit" type="submit" class="btn-invert self-start rounded-full px-6 py-3 font-display font-black text-sm tight-sm uppercase">Lanzar Barco</button>
+        </form>
 
         <form id="admin-form" class="card-dark rounded-3xl p-5 flex flex-col gap-4" novalidate>
           <label for="admin-text" id="admin-form-title" class="font-display font-extrabold text-sm tracking-widest uppercase opacity-80">Nuevo reto</label>
