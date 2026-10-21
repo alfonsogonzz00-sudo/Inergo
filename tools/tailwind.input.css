@@ -484,12 +484,12 @@ input[type="range"]::-moz-range-thumb{
   width:22px; height:22px; border-radius:50%; background:var(--paper); border:none; cursor:pointer;
 }
 
-select, textarea, input[type="text"], input[type="email"], input[type="password"]{
+select, textarea, input[type="text"], input[type="email"], input[type="password"], input[type="url"]{
   background:rgba(10,10,10,0.15);
   border:1.5px solid var(--line);
   color:var(--paper);
 }
-select:focus, textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus{
+select:focus, textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="url"]:focus{
   outline:none;
   border-color:var(--paper);
 }

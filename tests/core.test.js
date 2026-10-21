@@ -378,3 +378,23 @@ test("v2.2: el id del servidor se conserva en reto activo y pendientes", () => {
   const bad = C.normalizeData({ schemaVersion:2, activeChallenge: Object.assign({}, active, { drawId:"<script>" }) });
   assert.equal(bad.activeChallenge.drawId, null);
 });
+
+test("v2.3: enlaces de prueba y nombres de usuario", () => {
+  assert.equal(C.cleanEvidenceUrl(" https://www.tiktok.com/@a/video/1 "), "https://www.tiktok.com/@a/video/1");
+  assert.equal(C.cleanEvidenceUrl("https://www.instagram.com/reel/abc/"), "https://www.instagram.com/reel/abc/");
+  assert.equal(C.cleanEvidenceUrl("https://youtu.be/xyz"), "https://youtu.be/xyz");
+  assert.equal(C.cleanEvidenceUrl("http://www.tiktok.com/@a"), null, "solo https");
+  assert.equal(C.cleanEvidenceUrl("https://tiktok.com.evil.com/x"), null);
+  assert.equal(C.cleanEvidenceUrl("javascript:alert(1)"), null);
+  assert.equal(C.cleanUsername("@Alfonso_G0"), "alfonso_g0");
+  assert.equal(C.cleanUsername("ab"), null);
+  assert.equal(C.cleanUsername("con espacio"), null);
+});
+
+test("v2.3: el reto del Barco conserva su semana", () => {
+  const id = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90", w = "00000000-0000-0000-0000-00000000ba01";
+  const e = C.challengeFromDraw({ id, weekly_id:w, challenge_id:"reflexion-001", challenge_text:"Reflexiona en voz alta sobre algo.", category:"reflexion", points:15 });
+  assert.equal(e.weeklyId, w);
+  const d = C.normalizeData({ schemaVersion:2, activeChallenge: C.createActive(e.challenge, 1, e.drawId, e.weeklyId) });
+  assert.equal(d.activeChallenge.weeklyId, w);
+});

@@ -1,5 +1,14 @@
 # Cambios
 
+## v2.3.0 (rama `barco-de-la-semana`)
+
+- **Barco de la semana.** Un reto fijo para toda la comunidad durante unos días. Etiqueta «Barco · N a bordo» en la home → pantalla con el reto, la fecha de cierre y la tripulación. «Subirme al Barco» lo convierte en tu reto (con la ruleta, sin vuelta atrás).
+- **Añadir mi vídeo** tras completar un reto: enlace de TikTok, Instagram o YouTube (se valida en el móvil y en la base de datos) y, si es del Barco, opción de salir en la tripulación con tu usuario.
+- **Tarjeta para historias** (1080×1920): «Me ha tocado», «Lo he hecho» o «Barco de la semana». Abre el menú de compartir del móvil o descarga la imagen.
+- **Usuario** en Ajustes → Tu cuenta.
+- **Administración → Barco de la semana:** elegir reto, título y duración, y lanzarlo.
+- Base de datos: `add_evidence` y `current_weekly` (13 pruebas en `supabase/tests/barco_rls.sql`).
+
 ## v2.2.0 (rama `mvp-cuentas-y-sorteo-servidor`, sin publicar)
 
 - **Sorteo en el servidor.** Con conexión, PLAY crea una sesión anónima (sin registro) y pide el reto a `draw_challenge`: si ya tienes uno abierto, en este u otro dispositivo, te devuelve ese. La ruleta arranca al instante y el reto real se coloca en la última casilla al llegar. Sin conexión o si el servidor no contesta en 6 s, se sortea en el móvil como antes.

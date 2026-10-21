@@ -17,7 +17,7 @@
 })(typeof self !== "undefined" ? self : this, function(){
   "use strict";
 
-  const APP_VERSION = "2.2.0";
+  const APP_VERSION = "2.3.0";
   const STORAGE_KEY = "inergo_data_v1"; // NO cambiar: contiene el progreso de los usuarios
   const SCHEMA_VERSION = 2;
 
@@ -285,7 +285,8 @@
       endsAt: null,
       total: null,
       microcopy: typeof a.microcopy === "string" ? a.microcopy.slice(0, 60) : null,
-      drawId: uuidOrNull(a.drawId)
+      drawId: uuidOrNull(a.drawId),
+      weeklyId: uuidOrNull(a.weeklyId)
     };
     if(TIMED_PHASES.includes(a.phase)){
       const endsAt = nonNegInt(a.endsAt, 0);
@@ -567,7 +568,7 @@
     return normalizeChallengeSnapshot(challenge);
   }
 
-  function createActive(challenge, now, drawId){
+  function createActive(challenge, now, drawId, weeklyId){
     return {
       challenge: snapshot(challenge),
       phase: "spinning",
@@ -575,8 +576,21 @@
       endsAt: null,
       total: null,
       microcopy: null,
-      drawId: uuidOrNull(drawId)
+      drawId: uuidOrNull(drawId),
+      weeklyId: uuidOrNull(weeklyId)
     };
+  }
+
+  // Enlace de la prueba: TikTok, Instagram o YouTube (lo mismo que exige la base de datos).
+  const EVIDENCE_URL = /^https:\/\/([a-z0-9-]+\.)?(tiktok\.com|instagram\.com|youtube\.com|youtu\.be)\/[^\s]+$/i;
+  function cleanEvidenceUrl(v){
+    const t = typeof v === "string" ? v.trim() : "";
+    return t.length <= 500 && EVIDENCE_URL.test(t) ? t : null;
+  }
+  const USERNAME = /^[a-z0-9_.]{3,24}$/;
+  function cleanUsername(v){
+    const t = typeof v === "string" ? v.trim().toLowerCase().replace(/^@/, "") : "";
+    return USERNAME.test(t) ? t : null;
   }
 
   /* Reto asignado por el servidor (fila de public.draws) → reto de la app.
@@ -599,7 +613,7 @@
       challenge = { id, text, category: row.category, durationType:"timer",
         duration: known && known.duration ? known.duration : DEFAULT_TIMER[row.category], points };
     }
-    return { challenge, drawId: row.id.toLowerCase(), status: row.status };
+    return { challenge, drawId: row.id.toLowerCase(), weeklyId: uuidOrNull(row.weekly_id), status: row.status };
   }
 
   function startTimedPhase(active, phase, seconds, now){
@@ -655,7 +669,7 @@
   }
 
   return {
-    APP_VERSION, STORAGE_KEY, SCHEMA_VERSION, challengeFromDraw,
+    APP_VERSION, STORAGE_KEY, SCHEMA_VERSION, challengeFromDraw, cleanEvidenceUrl, cleanUsername,
     CATEGORIES, STAT_KEYS, CUSTOM_CATEGORIES, CUSTOM_DURATIONS, CUSTOM_CHALLENGE_POINTS,
     DEFAULT_CHALLENGES, MICROCOPY, SPIN_PHRASE, HISTORY_LIMIT, RECENT_LIMIT,
     mk, mkP, mkK,

@@ -253,7 +253,7 @@
   /* =========================================================
      7. NAVEGACIÓN
   ========================================================= */
-  const SCREENS_WITH_HEADING = ["pending","progress","mychallenges","settings","admin"];
+  const SCREENS_WITH_HEADING = ["pending","progress","mychallenges","settings","admin","barco"];
 
   function leavePlayScreen(){
     stopCountdown();
@@ -278,6 +278,7 @@
     if(screenName === "pending") renderPendingChallenges();
     if(screenName === "settings") renderSettings();
     if(screenName === "admin") renderAdmin();
+    if(screenName === "barco") renderBarco();
     if(screenName === "play") requestWakeLock();
     window.scrollTo(0,0);
     // Accesibilidad: al cambiar de pantalla el foco va al título.
@@ -347,6 +348,7 @@
   }
 
   function renderHome(){
+    renderBarcoPill();
     renderTestModeUI();
     renderCategorySelector();
     renderAvailableCount();
@@ -451,6 +453,7 @@
   }
 
   function startSpin(finalChallenge, pending){
+    state.lastCompleted = null;
     $("#spin-heading-text").textContent = SPIN_PHRASE;
 
     const phraseRow = $("#phrase-row");
@@ -577,8 +580,20 @@
     const skip = $("#skip-btn");
     skip.classList.toggle("hidden", !(testActive() && data.activeChallenge));
     const active = data.activeChallenge;
-    $("#abandon-btn").classList.toggle("hidden", !(active && active.phase !== "spinning"));
+    const live = !!(active && active.phase !== "spinning");
+    const done = !active && !!state.lastCompleted;
+    $("#abandon-btn").classList.toggle("hidden", !live);
+    $("#share-btn").classList.toggle("hidden", !(live || done));
+    $("#evidence-btn").classList.toggle("hidden", !(done && cloudOn && state.lastCompleted.drawId));
   }
+  $("#share-btn").addEventListener("click", () => {
+    const active = data.activeChallenge;
+    if(active) shareCard({ text: active.challenge.text, kind: active.weeklyId ? "barco" : "toca" });
+    else if(state.lastCompleted) shareCard({ text: state.lastCompleted.challenge.text, kind: "hecho" });
+  });
+  $("#evidence-btn").addEventListener("click", () => {
+    if(state.lastCompleted) openEvidenceSheet(state.lastCompleted);
+  });
   $("#skip-btn").addEventListener("click", () => {
     if(!testActive() || !data.activeChallenge) return;
     syncDraw("admin_skip_draw");
@@ -945,6 +960,8 @@
     });
     Core.registerRecent(data, challenge.id);
     syncDraw("complete_draw");
+    state.lastCompleted = { challenge, drawId: active.drawId || null, weeklyId: active.weeklyId || null };
+    if(active.weeklyId && active.drawId) markWeeklyDone(active.weeklyId, active.drawId);
     data.activeChallenge = null;
     saveData();
 
@@ -1311,6 +1328,208 @@
     $("#reset-btn").addEventListener("click", confirmReset);
   }
 
+  /* ---------- BARCO DE LA SEMANA (v2.3) ----------
+     Un reto fijo para toda la comunidad durante unos días. Te subes, lo
+     haces, pegas el enlace de tu vídeo y sales en la tripulación. */
+  const WEEKLY_DONE_KEY = "inergo_weekly_done_v1";
+  const barco = { current: null, loadedAt: 0 };
+  function readWeeklyDone(){
+    try{ const m = JSON.parse(localStorage.getItem(WEEKLY_DONE_KEY)); return m && typeof m === "object" && !Array.isArray(m) ? m : {}; }
+    catch(e){ return {}; }
+  }
+  function markWeeklyDone(weeklyId, drawId){
+    const m = readWeeklyDone(); m[weeklyId] = drawId;
+    try{ localStorage.setItem(WEEKLY_DONE_KEY, JSON.stringify(m)); }catch(e){}
+  }
+  async function loadBarco(force){
+    if(!cloudOn || navigator.onLine === false) return null;
+    if(!force && barco.loadedAt && Date.now() - barco.loadedAt < 60000) return barco.current;
+    try{ barco.current = await Cloud.currentWeekly(); barco.loadedAt = Date.now(); }catch(e){}
+    return barco.current;
+  }
+  function formatEnds(iso){
+    try{ return new Date(iso).toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long" }); }
+    catch(e){ return ""; }
+  }
+  async function renderBarcoPill(){
+    const pill = $("#barco-pill");
+    const w = await loadBarco();
+    if(!w){ pill.classList.add("hidden"); return; }
+    pill.textContent = "Barco" + (w.crew ? " · " + w.crew + " a bordo" : " de la semana");
+    pill.setAttribute("aria-label", "Barco de la semana" + (w.crew ? ", " + w.crew + " a bordo" : ""));
+    pill.classList.remove("hidden");
+  }
+
+  async function renderBarco(){
+    showBlock($("#barco-main"), false);
+    showBlock($("#barco-none"), false);
+    $("#barco-loading").classList.remove("hidden");
+    const w = await loadBarco(true);
+    $("#barco-loading").classList.add("hidden");
+    if(!w){ showBlock($("#barco-none"), true); return; }
+    showBlock($("#barco-main"), true);
+    $("#barco-title").textContent = w.title;
+    $("#barco-text").textContent = w.challenge_text;
+    $("#barco-meta").textContent = categoryLabel(w.category) + " · zarpa el " + formatEnds(w.ends_at);
+    $("#barco-share").onclick = () => shareCard({ text: w.challenge_text, kind: "barco" });
+
+    const btn = $("#barco-join"), hint = $("#barco-hint");
+    const doneDraw = readWeeklyDone()[w.id];
+    const active = data.activeChallenge;
+    btn.disabled = false;
+    if(doneDraw){
+      btn.textContent = "Añadir mi vídeo";
+      hint.textContent = "Ya lo cumpliste. Pega el enlace de tu vídeo para salir en la tripulación.";
+      btn.onclick = () => openEvidenceSheet({ drawId: doneDraw, weeklyId: w.id });
+    }else if(active && active.weeklyId === w.id){
+      btn.textContent = "Ir a mi reto";
+      hint.textContent = "Ya estás a bordo. No hay vuelta atrás.";
+      btn.onclick = () => resumeActive();
+    }else if(active){
+      btn.textContent = "Subirme al Barco";
+      hint.textContent = "Primero termina o abandona el reto que tienes en marcha.";
+      btn.onclick = () => showToast("Primero termina o abandona el reto que tienes en marcha.");
+    }else{
+      btn.textContent = "Subirme al Barco";
+      hint.textContent = "Al subirte, este pasa a ser tu reto. No hay vuelta atrás.";
+      btn.onclick = () => joinBarco(w);
+    }
+    renderCrew(w);
+  }
+
+  async function renderCrew(w){
+    const list = $("#barco-crew");
+    let rows = [];
+    try{ rows = await Cloud.weeklyCrew(w.id) || []; }catch(e){ rows = []; }
+    list.innerHTML = "";
+    $("#barco-count").textContent = String(rows.length);
+    $("#barco-crew-empty").classList.toggle("hidden", rows.length > 0);
+    rows.forEach(r => {
+      const url = Core.cleanEvidenceUrl(r.evidence_url);
+      const row = document.createElement("div");
+      row.className = "set-row";
+      row.innerHTML = `<p class="set-row-label">@${escapeHtml(r.username || "")}</p>` +
+        (url ? `<a href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer nofollow" class="font-num text-[11px] uppercase tracking-wide underline opacity-80 py-2 shrink-0">Ver vídeo</a>` : "");
+      list.appendChild(row);
+    });
+  }
+
+  async function joinBarco(w){
+    const btn = $("#barco-join");
+    setBusy(btn, true);
+    try{
+      const row = await Cloud.rpc("join_weekly", { p_weekly_id: w.id });
+      const r = Core.challengeFromDraw(Array.isArray(row) ? row[0] : row);
+      if(!r) throw new Error("No se pudo cargar el reto. Prueba otra vez.");
+      data.activeChallenge = Core.createActive(r.challenge, undefined, r.drawId, r.weeklyId || w.id);
+      saveData();
+      setBusy(btn, false);
+      Sound.clickPlay();
+      vibrate(15);
+      goTo("play");
+      startSpin(r.challenge);
+    }catch(e){
+      setBusy(btn, false);
+      showToast(e.message);
+    }
+  }
+
+  function openEvidenceSheet({ drawId, weeklyId }){
+    const registered = Cloud.isRegistered();
+    const shareRow = weeklyId
+      ? `<label class="flex items-start gap-3 text-sm leading-snug mt-4">
+           <input id="ev-share" type="checkbox" class="mt-1" ${registered ? "checked" : "disabled"}>
+           <span>Salir en la tripulación del Barco con mi usuario.${registered ? "" : " Necesitas cuenta y usuario: créalos en Ajustes."}</span>
+         </label>`
+      : "";
+    openSheet({
+      title: "Añade tu vídeo",
+      html: `<p>Pega el enlace de tu publicación en TikTok, Instagram o YouTube.</p>
+        <label for="ev-url" class="sr-only">Enlace del vídeo</label>
+        <input id="ev-url" type="url" inputmode="url" autocapitalize="off" spellcheck="false" class="w-full rounded-xl px-4 py-3 font-medium text-base mt-4" placeholder="https://www.tiktok.com/@…">
+        ${shareRow}`,
+      actions: [
+        { label:"Guardar", primary:true, onClick: () => saveEvidence(drawId) },
+        { label:"Ahora no" }
+      ]
+    });
+    setTimeout(() => { const i = $("#ev-url"); if(i) i.focus({ preventScroll:true }); }, 80);
+  }
+
+  async function saveEvidence(drawId){
+    const url = Core.cleanEvidenceUrl(($("#ev-url") || {}).value);
+    const shareEl = $("#ev-share");
+    const share = !!(shareEl && shareEl.checked && !shareEl.disabled);
+    if(!url){ showToast("El enlace tiene que ser de TikTok, Instagram o YouTube (https)."); return; }
+    try{
+      await Cloud.flushOutbox().catch(() => {}); // por si «completar» aún no había llegado
+      await Cloud.rpc("add_evidence", { p_draw_id: drawId, p_evidence_url: url, p_share: share });
+      showToast(share ? "A bordo: ya sales en la tripulación." : "Vídeo guardado.");
+      barco.loadedAt = 0;
+      if(state.screen === "barco") renderBarco();
+    }catch(e){
+      showToast(e.message);
+    }
+  }
+
+  /* ---------- Tarjeta para historias (1080×1920) ----------
+     Se dibuja en el móvil: con el menú de compartir del sistema si lo hay,
+     y si no, se descarga la imagen. */
+  function wrapLines(g, text, maxWidth){
+    const words = text.split(/\s+/), lines = [];
+    let line = "";
+    words.forEach(w => {
+      const test = line ? line + " " + w : w;
+      if(g.measureText(test).width > maxWidth && line){ lines.push(line); line = w; }
+      else line = test;
+    });
+    if(line) lines.push(line);
+    return lines;
+  }
+  async function shareCard({ text, kind }){
+    const W = 1080, H = 1920, X = 96, maxW = W - 2 * X;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const g = canvas.getContext("2d");
+    try{ await Promise.all([document.fonts.load('800 96px Manrope'), document.fonts.load('600 40px Inter')]); }catch(e){}
+    g.fillStyle = "#FF6347"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#FFFFFF"; g.textBaseline = "top";
+
+    g.font = '800 92px Manrope, system-ui, sans-serif';
+    g.fillText("INERGO", X, 150);
+    const kicker = kind === "hecho" ? "LO HE HECHO:" : kind === "barco" ? "BARCO DE LA SEMANA:" : "ME HA TOCADO:";
+    g.globalAlpha = 0.85; g.font = '600 42px Inter, system-ui, sans-serif';
+    g.fillText(kicker, X, 470); g.globalAlpha = 1;
+
+    let size = 104, lines;
+    do{
+      g.font = '800 ' + size + 'px Manrope, system-ui, sans-serif';
+      lines = wrapLines(g, String(text || "").toUpperCase(), maxW);
+      size -= 6;
+    }while(lines.length * (size + 6) * 1.06 > 900 && size > 48);
+    const lh = (size + 6) * 1.06;
+    lines.forEach((l, i) => g.fillText(l, X, 550 + i * lh));
+
+    g.font = '800 58px Manrope, system-ui, sans-serif';
+    g.fillText(kind === "hecho" ? "Hecho. Sin vuelta atrás." : "No hay vuelta atrás.", X, H - 400);
+    g.globalAlpha = 0.85; g.font = '600 38px Inter, system-ui, sans-serif';
+    g.fillText("inergo.vercel.app · @alfonsog0nzalez", X, H - 290); g.globalAlpha = 1;
+
+    const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+    if(!blob){ showToast("No se pudo crear la imagen."); return; }
+    const file = new File([blob], "inergo-reto.png", { type:"image/png" });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      try{ await navigator.share({ files:[file], text:"INERGO · https://inergo.vercel.app" }); }catch(e){}
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "inergo-reto.png";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    showToast("Imagen descargada: súbela a tus historias.");
+  }
+
   /* ---------- CUENTA (v2.2) ---------- */
   const LEGACY_FLAG = "inergo_legacy_imported_v1";
   function renderAccount(){
@@ -1319,7 +1538,10 @@
     const registered = Cloud.isRegistered();
     $("#account-guest").classList.toggle("hidden", registered);
     $("#account-user").classList.toggle("hidden", !registered);
-    if(registered) $("#acc-user-email").textContent = Cloud.getSession().email;
+    if(registered){
+      $("#acc-user-email").textContent = Cloud.getSession().email;
+      Cloud.getProfile().then(p => { if(p && p.username) $("#acc-username").value = p.username; }).catch(() => {});
+    }
   }
 
   // Sube una sola vez el progreso que ya estaba en este móvil.
@@ -1362,6 +1584,16 @@
   function setupAccount(){
     $("#account-guest").addEventListener("submit", (e) => { e.preventDefault(); accountAction("signup"); });
     $("#acc-signin").addEventListener("click", () => accountAction("signin"));
+    $("#acc-username-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const u = Core.cleanUsername($("#acc-username").value);
+      if(!u){ showToast("Usuario: 3-24 letras minúsculas, números, punto o guion bajo."); return; }
+      try{
+        await Cloud.updateProfile({ username: u });
+        $("#acc-username").value = u;
+        showToast("Usuario guardado: @" + u);
+      }catch(err){ showToast(err.message); }
+    });
     $("#acc-signout").addEventListener("click", async () => {
       await Cloud.signOut();
       testAllowed = false;
@@ -1834,8 +2066,48 @@
     }
     if(!admin.isAdmin){ showAdminView("denied"); return; }
     showAdminView("panel");
+    renderBarcoAdmin();
     updateAdminFormForCategory();
     await loadAdminRows();
+  }
+
+  async function renderBarcoAdmin(){
+    const sel = $("#barco-admin-challenge");
+    const keep = sel.value;
+    sel.innerHTML = "";
+    Core.getCatalog().forEach(c => {
+      const o = document.createElement("option");
+      o.value = c.id;
+      o.textContent = categoryLabel(c.category) + " · " + (c.text.length > 70 ? c.text.slice(0, 70) + "…" : c.text);
+      sel.appendChild(o);
+    });
+    if(keep) sel.value = keep;
+    const w = await loadBarco(true);
+    $("#barco-admin-current").textContent = w
+      ? "Ahora navega: «" + w.title + "», hasta el " + formatEnds(w.ends_at) + ". Si lanzas otro, sustituye a este."
+      : "No hay ningún Barco activo.";
+  }
+  function setupBarcoAdmin(){
+    $("#barco-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = $("#barco-admin-title").value.trim();
+      const challengeId = $("#barco-admin-challenge").value;
+      const days = Number($("#barco-admin-days").value) || 7;
+      if(title.length < 3){ showToast("Ponle un título al Barco."); return; }
+      if(!challengeId){ showToast("Elige un reto."); return; }
+      const btn = $("#barco-admin-submit");
+      setBusy(btn, true, "Lanzando…");
+      try{
+        const now = new Date();
+        await Cloud.createWeekly({ challenge_id: challengeId, title,
+          starts_at: now.toISOString(), ends_at: new Date(now.getTime() + days * 86400000).toISOString() });
+        $("#barco-admin-title").value = "";
+        barco.loadedAt = 0;
+        showToast("Barco lanzado.");
+        renderBarcoAdmin();
+      }catch(err){ showToast(err.message); }
+      setBusy(btn, false);
+    });
   }
 
   async function loadAdminRows(){
@@ -2089,7 +2361,7 @@
     registerServiceWorker();
     applyTestModeFromUrl();
     setupAdmin();
-    if(cloudOn) setupAccount();
+    if(cloudOn){ setupAccount(); setupBarcoAdmin(); }
     renderTestModeUI();
     refreshAdminRights();
     if(cloudOn){

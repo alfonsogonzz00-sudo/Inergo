@@ -77,6 +77,10 @@
       sin_retos: "No hay retos en esta categoría todavía.",
       necesitas_cuenta_y_prueba: "Para salir en la tripulación necesitas cuenta, usuario y el enlace de tu vídeo.",
       ya_importado: "Tu progreso ya estaba guardado.",
+      falta_enlace: "Pega el enlace de tu vídeo.",
+      barco_cerrado: "Este Barco ya ha zarpado. Espera al de la semana que viene.",
+      reto_abierto: "Primero termina o abandona el reto que tienes abierto.",
+      ya_en_el_barco: "Ya te subiste a este Barco.",
       solo_admin: "Solo administradores.",
       user_already_exists: "Ya hay una cuenta con ese email. Entra con tu contraseña.",
       email_exists: "Ya hay una cuenta con ese email. Entra con tu contraseña.",
@@ -92,6 +96,9 @@
     if(/invalid login credentials/i.test(raw)) return own.invalid_credentials;
     if(/already registered|already been registered/i.test(raw)) return own.user_already_exists;
     if(/password should be/i.test(raw)) return own.weak_password;
+    if(/profiles_username_format/i.test(raw)) return "Usuario: 3-24 letras minúsculas, números, punto o guion bajo.";
+    if(/profiles_username_key/i.test(raw)) return "Ese usuario ya está cogido. Prueba con otro.";
+    if(/draws_evidence/i.test(raw)) return "El enlace tiene que ser de TikTok, Instagram o YouTube (https).";
     if(/duplicate key/i.test(raw)) return "Ya existe un reto con ese identificador.";
     if(/check constraint/i.test(raw)) return "El reto no cumple las reglas del catálogo.";
     return raw ? String(raw).slice(0, 140) : "Algo ha fallado (" + status + ").";
@@ -337,7 +344,45 @@
   }
   function outboxSize(){ return readOutbox().length; }
 
+  /* ---------- Barco de la semana y perfil (v2.3) ---------- */
+  // Lecturas públicas: no crean sesión (así quien solo mira no genera usuarios).
+  function publicRpc(name, args){
+    return request("/rest/v1/rpc/" + name, { method:"POST", body: args || {} });
+  }
+  async function currentWeekly(){
+    const rows = await publicRpc("current_weekly", {});
+    return Array.isArray(rows) && rows.length ? rows[0] : null;
+  }
+  function weeklyCrew(weeklyId){ return publicRpc("weekly_crew", { p_weekly_id: weeklyId }); }
+
+  function userId(){
+    const s = getSession();
+    const c = s ? decodeJwt(s.access_token) : null;
+    return c && typeof c.sub === "string" ? c.sub : null;
+  }
+  async function getProfile(){
+    const id = userId();
+    if(!id) return null;
+    const rows = await request("/rest/v1/profiles?id=eq." + encodeURIComponent(id) + "&select=username,display_name,is_public", { auth:true });
+    return Array.isArray(rows) && rows.length ? rows[0] : null;
+  }
+  async function updateProfile(patch){
+    const id = userId();
+    if(!id) throw new Error("Inicia sesión para continuar.");
+    const rows = await request("/rest/v1/profiles?id=eq." + encodeURIComponent(id) + "&select=username,display_name,is_public", {
+      method:"PATCH", body: patch, auth:true, headers:{ Prefer:"return=representation" }
+    });
+    return Array.isArray(rows) ? rows[0] : rows;
+  }
+  async function createWeekly(row){
+    const rows = await request("/rest/v1/weekly_challenges?select=id,title,challenge_id,starts_at,ends_at", {
+      method:"POST", body: row, auth:true, headers:{ Prefer:"return=representation" }
+    });
+    return Array.isArray(rows) ? rows[0] : rows;
+  }
+
   window.InergoCloud = {
+    currentWeekly, weeklyCrew, getProfile, updateProfile, createWeekly,
     AUTH_KEY, enabled, getSession, clearSession, signOut, sendLink, consumeUrlSession, isAdmin,
     fetchCatalog, readCachedCatalog, saveCachedCatalog, createChallenge, updateChallenge,
     ensureSession, isRegistered, signUp, signIn, rpc, enqueue, flushOutbox, outboxSize
