@@ -17,7 +17,7 @@
 })(typeof self !== "undefined" ? self : this, function(){
   "use strict";
 
-  const APP_VERSION = "2.3.0";
+  const APP_VERSION = "2.4.0";
   const STORAGE_KEY = "inergo_data_v1"; // NO cambiar: contiene el progreso de los usuarios
   const SCHEMA_VERSION = 2;
 
@@ -29,9 +29,10 @@
     { id:"espontanea", label:"ESPONTÁNEA" },
     { id:"experiencia", label:"EXPERIENCIA" },
     { id:"reflexion", label:"REFLEXIÓN" },
-    { id:"conocimiento", label:"CONOCIMIENTO" }
+    { id:"conocimiento", label:"CONOCIMIENTO" },
+    { id:"extreme", label:"EXTREME" }
   ];
-  const STAT_KEYS = ["espontanea","experiencia","reflexion","conocimiento"];
+  const STAT_KEYS = ["espontanea","experiencia","reflexion","conocimiento","extreme"];
   // Los retos personalizados no pueden ser de "Conocimiento" (mecánica de dos fases propia).
   const CUSTOM_CATEGORIES = ["espontanea","experiencia","reflexion"];
   const CUSTOM_DURATIONS = [120, 300, 600, 900, 1800, 3600];
@@ -177,10 +178,28 @@
     mkK("conocimiento-057","Investiga en qué consistió la Matanza de Katyn y prepárate para explicarlo."),
     mkK("conocimiento-058","Investiga en qué consistió la Defenestración de Praga y prepárate para explicarlo."),
     mkK("conocimiento-059","Investiga en qué consistió el Cisma de 1054 entre las Iglesias católica y ortodoxa y prepárate para explicarlo."),
-    mkK("conocimiento-060","Investiga en qué consistió la Guerra de las Comunidades de Castilla y prepárate para explicarlo.")
+    mkK("conocimiento-060","Investiga en qué consistió la Guerra de las Comunidades de Castilla y prepárate para explicarlo."),
+
+    // EXTREME — se hace hoy, en cualquier ciudad del mundo, y casi siempre
+    // con desconocidos. Cronómetro y +40 XP.
+    mk("extreme-001","Pregunta a un desconocido qué vas a comer ahora. Lo que te diga es lo que comes, sin negociar.","extreme",1800,40),
+    mk("extreme-002","Marca este reto como hecho y dale tu móvil a un desconocido: que sea él quien pulse PLAY. El reto que le salga es tuyo, sin cambiarlo.","extreme",600,40),
+    mk("extreme-003","Entra en una tienda y regatea el precio de un producto hasta que te lo rebajen. Si no lo consigues, no lo compras.","extreme",900,40),
+    mk("extreme-004","Guarda el móvil y llega a un sitio que no conozcas preguntando solo a la gente. Sin mapas.","extreme",1800,40),
+    mk("extreme-005","Pregunta a un desconocido cuál es el mejor sitio de la zona que no sale en las guías, y ve ahora mismo.","extreme",1800,40),
+    mk("extreme-006","Durante 15 minutos, en cada cruce, pregunta a alguien nuevo hacia dónde caminas. Haz lo que te diga.","extreme",900,40),
+    mk("extreme-007","Pide a un desconocido que te enseñe a decir una frase en su idioma o con su acento, y úsala con las tres siguientes personas con las que hables.","extreme",1200,40),
+    mk("extreme-008","Busca a alguien que esté comiendo o tomando algo solo y pregúntale si puedes sentarte con él cinco minutos.","extreme",900,40),
+    mk("extreme-009","Pide a un desconocido que te enseñe algo que sepa hacer y tú no, y hazlo delante de él.","extreme",900,40),
+    mk("extreme-010","Entra en un sitio donde no pintas nada (una barbería, un taller, una academia de baile, un gimnasio) y pide probar lo que hacen allí.","extreme",1200,40),
+    mk("extreme-011","Pide a un músico o artista callejero que te deje participar en su actuación.","extreme",900,40),
+    mk("extreme-012","Invita a un café a un desconocido y pregúntale qué haría él si fuese tú hoy.","extreme",1200,40),
+    mk("extreme-013","Haz una pregunta en voz alta a todo un bar o cafetería, y no te vayas hasta que alguien te conteste.","extreme",600,40),
+    mk("extreme-014","Pide a un desconocido que te lleve al sitio más bonito que conozca cerca de aquí y que te haga una foto allí.","extreme",1800,40),
+    mk("extreme-015","Pide a un desconocido que te grabe mientras cuentas a cámara por qué estás aquí hoy y qué te da miedo.","extreme",600,40)
   ];
 
-  /* El catálogo vivo viene de Supabase (ver js/inergo-cloud.js). Estos 102
+  /* El catálogo vivo viene de Supabase (ver js/inergo-cloud.js). Estos 117
      retos son la copia de serie: se usan la primera vez sin conexión o si
      el servidor no responde. */
   let catalog = DEFAULT_CHALLENGES;
@@ -213,7 +232,7 @@
       xp: 0,
       streak: 0,
       lastCompletedDate: null,
-      stats: { espontanea:0, experiencia:0, reflexion:0, conocimiento:0 },
+      stats: { espontanea:0, experiencia:0, reflexion:0, conocimiento:0, extreme:0 },
       selectedCategory: "todos"
     };
   }
@@ -378,8 +397,8 @@
      2b. CATÁLOGO REMOTO (filas de la tabla public.challenges)
   ========================================================= */
   const CATALOG_ID = /^[a-z0-9-]{1,80}$/;
-  const CATEGORY_TYPE = { espontanea:"timer", reflexion:"timer", experiencia:"pending", conocimiento:"research" };
-  const CATEGORY_POINTS = { espontanea:20, experiencia:50, reflexion:15, conocimiento:20 };
+  const CATEGORY_TYPE = { espontanea:"timer", reflexion:"timer", experiencia:"pending", conocimiento:"research", extreme:"timer" };
+  const CATEGORY_POINTS = { espontanea:20, experiencia:50, reflexion:15, conocimiento:20, extreme:40 };
 
   // Convierte una fila de la base de datos al formato que usa la app.
   // Devuelve null si la fila no es coherente (nunca debería pasar: la base

@@ -119,3 +119,22 @@ update public.challenges set text = 'Pide un abrazo a un desconocido por la call
 update public.challenges set text = 'Mirando fijamente a cámara, confiesa algo pequeño que te dé vergüenza admitir.' where id = 'espontanea-005';
 update public.challenges set active = false where id = 'espontanea-013';
 update public.challenges set text = 'Pide ayuda a un desconocido para resolver algo que de verdad necesitas hoy y cuenta qué pasó.' where id = 'experiencia-003';
+
+-- v2.4.0 · Categoría EXTREME
+insert into public.challenges (id, text, category, duration_type, duration_seconds, research_seconds, talk_seconds, points, active, sort_order) values
+  ('extreme-001', 'Pregunta a un desconocido qué vas a comer ahora. Lo que te diga es lo que comes, sin negociar.', 'extreme', 'timer', 1800, null, null, 40, true, 1110),
+  ('extreme-002', 'Marca este reto como hecho y dale tu móvil a un desconocido: que sea él quien pulse PLAY. El reto que le salga es tuyo, sin cambiarlo.', 'extreme', 'timer', 600, null, null, 40, true, 1120),
+  ('extreme-003', 'Entra en una tienda y regatea el precio de un producto hasta que te lo rebajen. Si no lo consigues, no lo compras.', 'extreme', 'timer', 900, null, null, 40, true, 1130),
+  ('extreme-004', 'Guarda el móvil y llega a un sitio que no conozcas preguntando solo a la gente. Sin mapas.', 'extreme', 'timer', 1800, null, null, 40, true, 1140),
+  ('extreme-005', 'Pregunta a un desconocido cuál es el mejor sitio de la zona que no sale en las guías, y ve ahora mismo.', 'extreme', 'timer', 1800, null, null, 40, true, 1150),
+  ('extreme-006', 'Durante 15 minutos, en cada cruce, pregunta a alguien nuevo hacia dónde caminas. Haz lo que te diga.', 'extreme', 'timer', 900, null, null, 40, true, 1160),
+  ('extreme-007', 'Pide a un desconocido que te enseñe a decir una frase en su idioma o con su acento, y úsala con las tres siguientes personas con las que hables.', 'extreme', 'timer', 1200, null, null, 40, true, 1170),
+  ('extreme-008', 'Busca a alguien que esté comiendo o tomando algo solo y pregúntale si puedes sentarte con él cinco minutos.', 'extreme', 'timer', 900, null, null, 40, true, 1180),
+  ('extreme-009', 'Pide a un desconocido que te enseñe algo que sepa hacer y tú no, y hazlo delante de él.', 'extreme', 'timer', 900, null, null, 40, true, 1190),
+  ('extreme-010', 'Entra en un sitio donde no pintas nada (una barbería, un taller, una academia de baile, un gimnasio) y pide probar lo que hacen allí.', 'extreme', 'timer', 1200, null, null, 40, true, 1200),
+  ('extreme-011', 'Pide a un músico o artista callejero que te deje participar en su actuación.', 'extreme', 'timer', 900, null, null, 40, true, 1210),
+  ('extreme-012', 'Invita a un café a un desconocido y pregúntale qué haría él si fuese tú hoy.', 'extreme', 'timer', 1200, null, null, 40, true, 1220),
+  ('extreme-013', 'Haz una pregunta en voz alta a todo un bar o cafetería, y no te vayas hasta que alguien te conteste.', 'extreme', 'timer', 600, null, null, 40, true, 1230),
+  ('extreme-014', 'Pide a un desconocido que te lleve al sitio más bonito que conozca cerca de aquí y que te haga una foto allí.', 'extreme', 'timer', 1800, null, null, 40, true, 1240),
+  ('extreme-015', 'Pide a un desconocido que te grabe mientras cuentas a cámara por qué estás aquí hoy y qué te da miedo.', 'extreme', 'timer', 600, null, null, 40, true, 1250)
+on conflict (id) do nothing;

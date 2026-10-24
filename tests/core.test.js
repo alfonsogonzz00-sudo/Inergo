@@ -14,19 +14,19 @@ function fresh(){ return C.defaultData(); }
 // Generador pseudoaleatorio fijo para que los sorteos sean reproducibles.
 function seq(...values){ let i = 0; return () => values[i++ % values.length]; }
 
-test("el catálogo predeterminado se conserva íntegro (102 retos)", () => {
+test("el catálogo predeterminado se conserva íntegro (117 retos)", () => {
   const by = {};
   C.DEFAULT_CHALLENGES.forEach(c => { by[c.category] = (by[c.category] || 0) + 1; });
-  assert.equal(C.DEFAULT_CHALLENGES.length, 102);
-  assert.deepEqual(by, { espontanea:12, experiencia:10, reflexion:20, conocimiento:60 });
+  assert.equal(C.DEFAULT_CHALLENGES.length, 117);
+  assert.deepEqual(by, { espontanea:12, experiencia:10, reflexion:20, conocimiento:60, extreme:15 });
   const ids = new Set(C.DEFAULT_CHALLENGES.map(c => c.id));
-  assert.equal(ids.size, 102, "ids únicos");
+  assert.equal(ids.size, 117, "ids únicos");
 });
 
 test("XP fijos por categoría", () => {
   const xp = {};
   C.DEFAULT_CHALLENGES.forEach(c => { xp[c.category] = c.points; });
-  assert.deepEqual(xp, { espontanea:20, experiencia:50, reflexion:15, conocimiento:20 });
+  assert.deepEqual(xp, { espontanea:20, experiencia:50, reflexion:15, conocimiento:20, extreme:40 });
 });
 
 test("tipos de reto según categoría", () => {
@@ -284,8 +284,8 @@ test("catálogo: el sorteo usa el catálogo activo y vuelve al de serie si se va
   assert.equal(C.pickChallenge(d, "todos").id, "espontanea-zz");
   assert.equal(C.poolFor(d, "reflexion").length, 0);
   C.setCatalog(null);
-  assert.equal(C.getCatalog().length, 102);
-  assert.equal(C.poolFor(d, "todos").length, 102);
+  assert.equal(C.getCatalog().length, 117);
+  assert.equal(C.poolFor(d, "todos").length, 117);
 });
 
 test("panel: prepara filas válidas para la base de datos", () => {

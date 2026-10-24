@@ -1,5 +1,11 @@
 # Cambios
 
+## v2.4.0
+
+- **Nueva categoría EXTREME.** 15 retos que se hacen hoy, en cualquier ciudad del mundo y casi siempre con desconocidos: que un desconocido elija tu próxima comida, que sea él quien pulse PLAY, regatear en una tienda, llegar a un sitio sin mapas… Cronómetro y +40 XP, timbre de revelación propio.
+- Disponible como chip en la home, en «Todos», en estadísticas y en Administración.
+- Base de datos: migración `20261024030000_categoria_extreme.sql` (categoría admitida en `challenges` y `draws`, `draw_challenge`, `my_stats` e `import_legacy_progress`) y los 15 retos en `seed.sql`.
+
 ## v2.3.0 (rama `barco-de-la-semana`)
 
 - **Barco de la semana.** Un reto fijo para toda la comunidad durante unos días. Etiqueta «Barco · N a bordo» en la home → pantalla con el reto, la fecha de cierre y la tripulación. «Subirme al Barco» lo convierte en tu reto (con la ruleta, sin vuelta atrás).

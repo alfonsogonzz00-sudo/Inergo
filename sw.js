@@ -8,7 +8,7 @@
    · Al publicar una versión nueva, sube VERSION aquí y el ?v= en
      inergo.html (ver README → "Publicar una versión nueva").
 ========================================================= */
-const VERSION = "2.3.0";
+const VERSION = "2.4.0";
 const CACHE_NAME = "inergo-" + VERSION;
 const HTML_FALLBACK = "./inergo.html";
 

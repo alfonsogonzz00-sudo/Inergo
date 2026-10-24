@@ -164,7 +164,8 @@
     espontanea:   [520, 780],
     experiencia:  [420, 630, 840],
     reflexion:    [360, 540],
-    conocimiento: [500, 700, 940]
+    conocimiento: [500, 700, 940],
+    extreme:      [300, 450, 680, 1020]
   };
 
   const Sound = {
@@ -2125,7 +2126,8 @@
     espontanea: "+20 XP · cronómetro",
     experiencia: "+50 XP · se apunta en pendientes, sin cronómetro",
     reflexion: "+15 XP · cronómetro",
-    conocimiento: "+20 XP · investigar 10 min y hablar 1 min"
+    conocimiento: "+20 XP · investigar 10 min y hablar 1 min",
+    extreme: "+40 XP · cronómetro · válido en cualquier ciudad"
   };
 
   function updateAdminFormForCategory(){
